@@ -208,8 +208,43 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedCodeTheme) applyCodeTheme(savedCodeTheme);
         else applyCodeTheme('androidstudio');
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const fileId = urlParams.get('id');
+        // --- URL PARSING LOGIC ---
+                const urlParams = new URLSearchParams(window.location.search);
+// 1. Check Query Params
+        let fileId = urlParams.get('view') || urlParams.get('id') || urlParams.get('chat');
+
+        // 2. Check Hash (Static site routing: /#/id)
+        if (!fileId && window.location.hash) {
+                        let hashVal = window.location.hash.substring(1);
+            if (hashVal.startsWith('/')) hashVal = hashVal.substring(1);
+                        if (/^[a-zA-Z0-9_-]+$/.test(hashVal) && hashVal.length > 20) {
+                fileId = hashVal;
+            }
+        }
+
+        // 3. Check Path (SPA Routing: /id, /view/id, /chat/id, /id/id)
+        if (!fileId) {
+            const pathSegments = window.location.pathname.split('/').filter(seg => seg && seg !== 'index.html');
+            if (pathSegments.length > 0) {
+                const lastSegment = pathSegments[pathSegments.length - 1];
+                const secondLastSegment = pathSegments.length > 1 ? pathSegments[pathSegments.length - 2].toLowerCase() : null;
+                
+                // Helper to validate ID format
+                const isLikelyId = (id) => /^[a-zA-Z0-9_-]+$/.test(id) && id.length > 20;
+
+                if (isLikelyId(lastSegment)) {
+                    // Case: domain.com/<id>
+                    if (pathSegments.length === 1) {
+                    fileId = lastSegment;
+                    } 
+                    // Case: domain.com/view/<id>, /chat/<id>, /id/<id>
+                    else if (['view', 'chat', 'id'].includes(secondLastSegment)) {
+                        fileId = lastSegment;
+                    }
+                }
+            }
+        }
+
         if (fileId) handleDriveLink(fileId, false);
     }
 
@@ -277,8 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showThemePreview(themeValue) {
-        console.log("beep");
-        clearTimeout(themePreviewTimeout);
+                clearTimeout(themePreviewTimeout);
 
         // Fix FOUC: Don't rebuild if theme hasn't changed
         if (lastPreviewedTheme === themeValue && themePreviewContainer.classList.contains('visible')) return;
@@ -380,8 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.addEventListener('click', (e) => {
-        // Bridge check: If clicking inside preview or wrapper, don't close
-        if (!codeThemeWrapper.contains(e.target) && !themePreviewContainer.contains(e.target)) {
+                if (!codeThemeWrapper.contains(e.target) && !themePreviewContainer.contains(e.target)) {
             codeThemeWrapper.classList.remove('open');
             hideThemePreview();
         }
@@ -402,11 +435,24 @@ document.addEventListener('DOMContentLoaded', () => {
         request.onsuccess = (e) => {
             db = e.target.result;
             loadHistoryLists();
-            if (window.location.protocol !== 'file:') {
-                if (!new URLSearchParams(window.location.search).get('id')) {
+            // Don't auto-load last file if we are loading from URL (Params, Hash, or Path)
+            const urlParams = new URLSearchParams(window.location.search);
+            const hasParams = urlParams.get('id') || urlParams.get('view') || urlParams.get('chat');
+            const hasHash = window.location.hash.length > 1;
+            
+            // Check for path logic used in initPreferences
+            let hasPathId = false;
+            const pathSegments = window.location.pathname.split('/').filter(seg => seg && seg !== 'index.html');
+            if (pathSegments.length > 0) {
+                 const potentialId = pathSegments[pathSegments.length - 1];
+                 if (/^[a-zA-Z0-9_-]+$/.test(potentialId) && potentialId.length > 20) {
+                     hasPathId = true;
+                 }
+            }
+
+            if (window.location.protocol !== 'file:' && !hasParams && !hasHash && !hasPathId) {
                     loadLastFile();
-                }
-            } else {
+            } else if (window.location.protocol === 'file:') {
                 loadLastFile();
             }
         };
@@ -839,8 +885,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateUrl(id) {
         try {
             const newUrl = new URL(window.location);
-            if (id) newUrl.searchParams.set('id', id);
-            else newUrl.searchParams.delete('id');
+            // Clear old params to be clean
+            newUrl.searchParams.delete('id');
+            newUrl.searchParams.delete('chat');
+
+            if (id) {
+                newUrl.searchParams.set('view', id);
+            } else {
+                newUrl.searchParams.delete('view');
+            }
             window.history.pushState({}, '', newUrl);
         } catch (e) {}
     }
@@ -1169,15 +1222,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         postProcessCodeBlocks();
         if (isClick) {
-            setActiveSidebarItem(cinemaModeBtn);
             if (window.innerWidth <= 768) toggleSidebar();
         }
         updateActivePromptOnScroll();
     }
-
-    cinemaModeBtn.addEventListener('click', () => {
-        alert("Cinema Mode coming soon!");
-    });
 
     const stickyObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -1493,8 +1541,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             hljs.highlightElement(block);
 
-            const langResult = hljs.getLanguage(Array.from(block.classList).find(c => c.startsWith('language-'))?.replace('language-', ''));
-            const lang = langResult ? langResult.name : 'Plain Text';
+            let lang = 'Plain Text';
+            const langClass = Array.from(block.classList).find(c => c.startsWith('language-'));
+            if (langClass) lang = langClass.replace('language-', '');
+
+            // Fallback for undefined
+            if (lang === 'undefined') lang = 'Unknown Language';
 
             const pre = block.parentElement;
             if (pre.parentElement.classList.contains('code-block-wrapper')) return;
