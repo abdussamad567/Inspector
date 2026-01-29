@@ -2,8 +2,6 @@
 
 Inspector is a high-performance, open-source visualization tool designed for developers working with Google AI Studio. It transforms raw, difficult-to-read JSON exports into a clean, readable, and interactive conversation timeline.
 
-**Live Demo:** [ai-inspector.vercel.app](https://ai-inspector.vercel.app/)
-
 | Before Inspector | After Inspector |
 :-------------------------:|:-------------------------:
 <img src="./screenshot-of-raw-export.png" alt="Inspector Preview" width="384" /> | <img src="./screenshot-of-inspector-ui.png" alt="Inspector Preview" width="384" />
@@ -12,13 +10,16 @@ Inspector is a high-performance, open-source visualization tool designed for dev
 
 Google AI Studio is an excellent prototyping environment, but managing long context windows and analyzing history exports presents significant challenges:
 
-*   **Search & Retrieval:** It is notoriously difficult to search through long conversations within the native interface. Finding specific past prompts or responses in a 50k+ token history is often impossible.
+*   **Search & Retrieval:** It is notoriously difficult to search through long conversations within the native interface. Finding specific past prompts or responses in a 250k+ token history is often just pure pain.
 *   **Unreadable Exports:** AI Studio exports data to Google Drive as raw, structured JSON. This format is illegible for humans trying to read the conversation flow or analyze the logic.
 *   **Hidden Metadata:** Critical information like "Chain of Thought" reasoning blocks, safety ratings, and exact token counts per message are often obscured or completely invisible in the native UI.
 
 Inspector solves this by parsing that raw JSON locally into a rich, searchable interface.
 
 Not enough reason? To find an exhaustive list of benefits that you get from using Inspector, go to: https://ai.timchinye.com/chat/1gTsxi21uaAEwa95Sl4eQ_B9HajiU3RYd.
+
+### How to view an Google AI Studio raw (JSON) export file using Inspector
+<a href="https://www.youtube.com/watch?v=e4N2fiAC1XU"><img src="https://raw.githubusercontent.com/TimChinye/Inspector/refs/heads/main/how-to-use-thumbnail.png" alt="How to view an Google AI Studio raw (JSON) export file using Inspector" width="576" /></a>
 
 ## Key Features
 
