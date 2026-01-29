@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Inspector - Google AI Studio Viewer</title>
 
+    <script>
+      if (window.location.protocol.startsWith('http')) {
+        document.write('<base href="/">');
+      }
+    </script>
+    
     <link rel="icon" href="./favicon.ico" sizes="any">
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
 
@@ -17,7 +23,7 @@
 
     <link id="highlight-stylesheet" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/androidstudio.min.css">
 
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="./styles.css">
 </head>
 
 <body>
@@ -31,10 +37,10 @@
         <button id="cancel-processing-btn" class="btn btn-secondary" style="margin-top:20px; border-color:white; color:white; background:transparent;">Cancel / Stop</button>
     </div>
 
-    <!-- Image Modal (Redesigned) -->
+    <!-- Image Modal -->
     <div id="image-modal" class="hidden">
         <div class="modal-content image-viewer-content">
-            <div class="text-viewer-header"> <!-- Reuse text viewer header style -->
+            <div class="text-viewer-header">
                 <span id="image-viewer-filename">Image Preview</span>
                 <div class="viewer-actions">
                     <button id="download-image-btn" class="icon-btn" title="Download"><i class="ph ph-download-simple"></i></button>
@@ -382,7 +388,7 @@
         </div>
     </template>
 
-    <!-- Drive Image Template (Similar structure, distinct icon) -->
+    <!-- Drive Image Template -->
     <template id="drive-image-template">
         <div class="drive-document-card drive-image-card">
             <div class="drive-doc-icon">
@@ -409,7 +415,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
-    <script src="script.js"></script>
+    <script src="./script.js"></script>
 </body>
 
 </html>
