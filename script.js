@@ -1201,7 +1201,22 @@ document.addEventListener('DOMContentLoaded', () => {
         let userPromptCount = 0;
 
         parsedData.chunkedPrompt.chunks.forEach((chunk, index) => {
-            if (chunk.role !== currentRole && currentTurn.length > 0) {
+            let shouldFlush = false;
+
+            if (currentTurn.length > 0) {
+                if (chunk.role !== currentRole) {
+                    shouldFlush = true;
+                } else if (currentRole === 'model') {
+                    // Split model messages if "Thought" status changes (fixes bug where response merges into thought)
+                    const currentIsThought = currentTurn[0].isThought;
+                    const newIsThought = chunk.isThought;
+                    if (currentIsThought !== newIsThought) {
+                        shouldFlush = true;
+                    }
+                }
+            }
+
+            if (shouldFlush) {
                 let id = null;
                 if (currentRole === 'user') {
                     id = `msg-user-${userPromptCount}`;

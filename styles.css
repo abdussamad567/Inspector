@@ -1298,6 +1298,10 @@ input:checked + .slider:before {
     word-break: break-word;
 }
 
+.message img {
+    max-width: 100%;
+}
+
 .role-user {
     align-items: flex-end;
 }
