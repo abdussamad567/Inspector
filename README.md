@@ -82,6 +82,9 @@ You can easily host your own version of Inspector to use a custom domain (e.g., 
 
 You can now share professional links like: `ai.timchinye.com/chat/1jpc4123XaV...`
 
+**How to Update:**
+To get the latest features, go to your forked repository on GitHub and click the **"Sync Fork"** button. Vercel will automatically detect the change and redeploy the new version for you.
+
 ## Future Roadmap
 
 Development on these features depends on community activity (Issues, Stars, and Pull Requests).
