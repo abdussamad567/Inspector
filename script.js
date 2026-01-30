@@ -589,7 +589,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentFileName = record.name;
         parsedData = record.data;
         rawFileContent = record.raw || JSON.stringify(record.data, null, 2);
-        filenameDisplay.textContent = currentFileName;
+        filenameDisplay.textContent = truncate(currentFileName, 64);
+        filenameDisplay.title = currentFileName;
         document.title = `${currentFileName} | Inspector`;
         loadHistoryLists();
         startProcessing();
@@ -1320,18 +1321,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     modalImg.src = img.src;
                     imageModal.classList.remove('hidden');
                 };
-            } else if (chunk.driveDocument) {
-                const template = document.getElementById('drive-doc-template');
+            } else if (chunk.driveDocument || chunk.driveImage) {
+                let template;
+                if (chunk.driveDocument) template = document.getElementById('drive-doc-template');
+                if (chunk.driveImage) template = document.getElementById('drive-image-template');
+
                 contentContainer = template.content.cloneNode(true).firstElementChild;
-                const driveId = chunk.driveDocument.id;
+                const driveId = chunk.driveDocument?.id || chunk.driveImage?.id;
                 contentContainer.querySelector('.drive-id-display').textContent = truncate(driveId, 15);
-                contentContainer.querySelector('.open-drive-link-btn').href = `https://drive.google.com/file/d/${driveId}`;
-                contentContainer.querySelector('.view-drive-file-btn').onclick = () => fetchAndDisplayDriveFileContent(driveId);
-            } else if (chunk.driveImage) {
-                const template = document.getElementById('drive-image-template');
-                contentContainer = template.content.cloneNode(true).firstElementChild;
-                const driveId = chunk.driveImage.id;
-                contentContainer.querySelector('.drive-id-display').textContent = truncate(driveId, 15);
+                contentContainer.querySelector('.drive-id-display').title = driveId;
                 contentContainer.querySelector('.open-drive-link-btn').href = `https://drive.google.com/file/d/${driveId}`;
                 contentContainer.querySelector('.view-drive-file-btn').onclick = () => fetchAndDisplayDriveFileContent(driveId);
             }
@@ -1369,6 +1367,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const detectedLanguage = highlightResult.language || 'Plain Text';
 
                 textViewerFilename.textContent = `Drive File: ${truncate(driveId, 15)}`;
+                textViewerFilename.title = driveId;
                 textViewerLangTag.textContent = detectedLanguage;
                 textViewerCode.textContent = text;
                 textViewerCode.className = `hljs language-${detectedLanguage}`; // Reset class
