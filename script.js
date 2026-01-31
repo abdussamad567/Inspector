@@ -179,6 +179,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         if (savedTheme === 'dark' || (!savedTheme && prefersDark)) setTheme('dark');
         else setTheme('light');
+        // Startup behavior
+const savedOpenLastPage = localStorage.getItem('openLastPageOnStartup');
+const openLastPageOnStartup =
+  savedOpenLastPage !== null ? JSON.parse(savedOpenLastPage) : true;
+
 
         const savedThinking = localStorage.getItem('collapseThoughts');
         collapseThoughts = savedThinking ? JSON.parse(savedThinking) : true;
@@ -209,6 +214,8 @@ document.addEventListener('DOMContentLoaded', () => {
         else applyCodeTheme('androidstudio');
 
         // --- URL PARSING LOGIC ---
+        if (openLastPageOnStartup) {
+
                 const urlParams = new URLSearchParams(window.location.search);
 // 1. Check Query Params
         let fileId = urlParams.get('view') || urlParams.get('id') || urlParams.get('chat');
@@ -247,6 +254,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (fileId) handleDriveLink(fileId, false);
     }
+}
+        
 
     function setTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
