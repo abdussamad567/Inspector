@@ -1,6 +1,7 @@
+_At least one feature request or bug fix will be completed per day.<br>All contributions would be greatly appreciated, whether that's in the form of opening or closing issues. Cheers, thanks for your help!_
 # Inspector - Google AI Studio Viewer
 
-Inspector is a high-performance, open-source visualization tool designed for developers working with Google AI Studio. It transforms raw, difficult-to-read JSON exports into a clean, readable, and interactive conversation timeline.
+Inspector is a UX-focused, open-source visualization tool designed for developers working with Google AI Studio. It transforms raw, difficult-to-read JSON exports into a clean, readable, and interactive conversation timeline.
 
 | Before Inspector | After Inspector |
 :-------------------------:|:-------------------------:
@@ -19,7 +20,7 @@ Inspector solves this by parsing that raw JSON locally into a rich, searchable i
 Not enough reason? To find an exhaustive list of benefits that you get from using Inspector, go to: https://ai.timchinye.com/chat/1gTsxi21uaAEwa95Sl4eQ_B9HajiU3RYd.
 
 ### How to view an Google AI Studio raw (JSON) export file using Inspector
-<a href="https://www.youtube.com/watch?v=e4N2fiAC1XU"><img src="https://raw.githubusercontent.com/TimChinye/Inspector/refs/heads/main/how-to-use-thumbnail.png" alt="How to view an Google AI Studio raw (JSON) export file using Inspector" width="576" /></a>
+<a href="https://www.youtube.com/watch?v=e4N2fiAC1XU" target="_blank"><img src="https://raw.githubusercontent.com/TimChinye/Inspector/refs/heads/main/how-to-use-thumbnail.png" alt="How to view an Google AI Studio raw (JSON) export file using Inspector" width="576" /></a>
 
 ## Key Features
 
@@ -71,8 +72,6 @@ Inspector supports a flexible routing system. You can share deep links to specif
 - `https://ai-inspector.vercel.app/chat/1jpc4123XaVz3...`
 - `https://ai-inspector.vercel.app/?view=1jpc4123XaVz3...`
 
-*Note: The hash strategy (`/#/FILE_ID`) is also supported for maximum compatibility with static hosts.*
-
 ## Self-Hosting
 
 You can easily host your own version of Inspector to use a custom domain (e.g., `ai.yourname.com`). Since the application is stateless and serverless, hosting is free on platforms like Vercel, Netlify, or Render.
@@ -83,6 +82,9 @@ You can easily host your own version of Inspector to use a custom domain (e.g., 
 4.  **Add Domain:** Configure your custom domain in the Vercel dashboard settings.
 
 You can now share professional links like: `ai.timchinye.com/chat/1jpc4123XaV...`
+
+**How to Update:**
+To get the latest features, go to your forked repository on GitHub and click the **"Sync Fork"** button. Vercel will automatically detect the change and redeploy the new version for you.
 
 ## Future Roadmap
 
