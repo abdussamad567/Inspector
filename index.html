@@ -136,31 +136,41 @@
                     <button class="mini-tab active" data-target="recent">History</button>
                     <button class="mini-tab" data-target="pinned">Pinned</button>
                 </div>
-
+                
                 <div id="view-recent" class="history-view active">
                     <div id="recent-files-list" class="scrolling-pinned"></div>
                     <button id="clearRecentsBtn" class="clear-history-btn" title="Clear Recent History">
                         <i class="ph ph-trash"></i> Clear History
                     </button>
                 </div>
-
+                
                 <div id="view-pinned" class="history-view">
                     <div id="pinned-files-list" class="scrolling-pinned"></div>
                 </div>
-
+                
                 <div class="separator"></div>
             </div>
-
+            
             <div class="nav-label">Actions</div>
             <button id="toggleAllCodeAction" class="nav-item">
                 <i class="ph ph-brackets-curly"></i>
                 <span>Toggle Code Blocks</span>
             </button>
-
+            
             <div class="nav-label mt-4">Preferences</div>
-
+            
             <div class="sidebar-settings">
-
+                
+                <span class="setting-title">Auto-restore</span>
+                <div class="mode-toggle-wrapper">
+                    <span class="toggle-label text-right">Off</span>
+                    <label class="switch">
+                        <input type="checkbox" id="autoRestoreToggle" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="toggle-label text-left">On</span>
+                </div>
+                
                 <span class="setting-title">Navigation</span>
                 <div class="mode-toggle-wrapper">
                     <span class="toggle-label text-right">Turn-based</span>
@@ -170,7 +180,7 @@
                     </label>
                     <span class="toggle-label text-left">Timeline</span>
                 </div>
-
+                
                 <span class="setting-title" style="align-self:start; padding-top:6px;">Code Theme</span>
                 <div class="custom-select-wrapper" id="codeThemeWrapper">
                     <div class="custom-select-trigger" id="codeThemeTrigger">
@@ -181,12 +191,12 @@
                         <!-- Options injected by JS -->
                     </div>
                 </div>
-
+                
                 <span class="setting-title">Content Width</span>
                 <div class="slider-wrapper" style="width:100%">
                     <input type="range" id="widthSlider" min="600" max="1600" step="50" class="styled-range">
                 </div>
-
+                
                 <span class="setting-title">Metadata</span>
                 <div class="mode-toggle-wrapper">
                     <span class="toggle-label text-right">Collapsed</span>
@@ -196,7 +206,7 @@
                     </label>
                     <span class="toggle-label text-left">Expanded</span>
                 </div>
-
+                
                 <span class="setting-title">Thinking</span>
                 <div class="mode-toggle-wrapper">
                     <span class="toggle-label text-right">Minimize</span>
@@ -206,7 +216,7 @@
                     </label>
                     <span class="toggle-label text-left">Visible</span>
                 </div>
-
+                
                 <span class="setting-title">Code Max Height</span>
                 <div class="mode-toggle-wrapper">
                     <span class="toggle-label text-right">Fluid</span>
@@ -216,7 +226,7 @@
                     </label>
                     <span class="toggle-label text-left">Fixed</span>
                 </div>
-
+                
                 <span class="setting-title">Code State</span>
                 <div class="mode-toggle-wrapper">
                     <span class="toggle-label text-right">Reset</span>
@@ -237,7 +247,7 @@
                     <span class="toggle-label text-left">On</span>
                 </div>
             </div>
-
+            
             <div class="nav-label mt-4">Conversation</div>
             <div id="prompt-list" class="scrollable-list">
                 <div class="empty-state-sidebar">

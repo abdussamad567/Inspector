@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
     const sidebarCloseBtn = document.getElementById('sidebar-close-btn');
     const toggleAllCodeAction = document.getElementById('toggleAllCodeAction');
+    const autoRestoreToggle = document.getElementById('autoRestoreToggle');
     const sidebarModeToggle = document.getElementById('sidebarModeToggle');
     const thinkingModeToggle = document.getElementById('thinkingModeToggle');
     const metadataCollapseToggle = document.getElementById('metadataCollapseToggle');
@@ -84,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let parsedData = null;
     let currentPrompts = [];
     let currentFileName = "Untitled";
+    let openLastFileOnStartup = true;
     let isScrollMode = false;
     let currentFocusIndex = -1;
     let collapseThoughts = true;
@@ -181,6 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         if (savedTheme === 'dark' || (!savedTheme && prefersDark)) setTheme('dark');
         else setTheme('light');
+
+        const savedRestore = localStorage.getItem('autoRestore');
+        openLastFileOnStartup = savedRestore ? JSON.parse(savedRestore) : true;
+        autoRestoreToggle.checked = openLastFileOnStartup;
 
         const savedThinking = localStorage.getItem('collapseThoughts');
         collapseThoughts = savedThinking ? JSON.parse(savedThinking) : true;
@@ -450,16 +456,17 @@ document.addEventListener('DOMContentLoaded', () => {
             let hasPathId = false;
             const pathSegments = window.location.pathname.split('/').filter(seg => seg && seg !== 'index.html');
             if (pathSegments.length > 0) {
-                 const potentialId = pathSegments[pathSegments.length - 1];
-                 if (/^[a-zA-Z0-9_-]+$/.test(potentialId) && potentialId.length > 20) {
-                     hasPathId = true;
-                 }
+                const potentialId = pathSegments[pathSegments.length - 1];
+                if (/^[a-zA-Z0-9_-]+$/.test(potentialId) && potentialId.length > 20) {
+                    hasPathId = true;
+                }
             }
 
+            // Only call loadLastFile if no URL ID is present AND preference is true
             if (window.location.protocol !== 'file:' && !hasParams && !hasHash && !hasPathId) {
-                    loadLastFile();
+                if (openLastFileOnStartup) loadLastFile();
             } else if (window.location.protocol === 'file:') {
-                loadLastFile();
+                if (openLastFileOnStartup) loadLastFile();
             }
         };
         request.onerror = (e) => console.error("DB Error", e);
@@ -659,6 +666,11 @@ document.addEventListener('DOMContentLoaded', () => {
     sidebarToggleBtn.addEventListener('click', toggleSidebar);
     sidebarCloseBtn.addEventListener('click', toggleSidebar);
     sidebarOverlay.addEventListener('click', toggleSidebar);
+
+    autoRestoreToggle.addEventListener('change', (e) => {
+        openLastFileOnStartup = e.target.checked;
+        localStorage.setItem('autoRestore', JSON.stringify(openLastFileOnStartup));
+    });
 
     sidebarModeToggle.addEventListener('change', (e) => {
         isScrollMode = e.target.checked;
