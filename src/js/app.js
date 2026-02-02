@@ -269,7 +269,7 @@ function setupEventListeners() {
             const text = await navigator.clipboard.readText();
             handlePaste(text);
         } catch (err) {
-            UI.showError("Clipboard Error", "Could not access clipboard content.");
+            UI.showError("Clipboard Error", "Could not access clipboard content. Please try using Ctrl+V or check permissions.");
         }
     });
 

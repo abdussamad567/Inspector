@@ -317,7 +317,7 @@ function initCodeThemeUI() {
                 :host { display: block; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
                 .preview-box { border-radius: 6px; overflow: hidden; background: var(--bg-code, #1e293b); }
                 pre { margin: 0; padding: 10px; }
-                code.hljs { padding: 0; background: transparent; }
+                code.hljs { padding: 0; }
                 ${dropdownCss}
             </style>
             <div class="preview-box">
@@ -713,7 +713,29 @@ function createMessageElement(chunks, role, id = null) {
     
     const tooltipTemplate = document.getElementById('message-tooltip-template');
     if(tooltipTemplate) {
-        wrapper.appendChild(tooltipTemplate.content.cloneNode(true));
+        const tooltip = tooltipTemplate.content.cloneNode(true);
+        const copyMd = tooltip.querySelector('[data-action="copy-md"]');
+        const copyText = tooltip.querySelector('[data-action="copy-text"]');
+        
+        // Find the main text content for copying. Use the first chunk's text if available.
+        // Note: This works because code blocks rely on the original markdown/text inside the chunk.
+        const mainTextContent = chunks.map(c => c.text).filter(Boolean).join('\n\n');
+
+        if (mainTextContent) {
+            copyMd.onclick = () => {
+                navigator.clipboard.writeText(mainTextContent).then(() => showToast("Copied Markdown"));
+            };
+            copyText.onclick = () => {
+                // Remove Markdown formatting for plain text copy
+                const strippedText = mainTextContent.replace(/([_*~`])/g, '');
+                navigator.clipboard.writeText(strippedText).then(() => showToast("Copied Plain Text"));
+            };
+        } else {
+            // Hide tooltips if the message contains no copyable text (e.g., only images/drive links)
+            wrapper.querySelector('.message-tooltip').style.display = 'none';
+        }
+
+        wrapper.appendChild(tooltip);
     }
     
     wrapper.appendChild(header);
