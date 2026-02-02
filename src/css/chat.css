@@ -1,1 +1,388 @@
-/* Not yet implemented */
+#chat-stream {
+    padding-bottom: 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.message {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    scroll-margin-top: 20px;
+    position: relative;
+}
+
+.message-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+}
+
+.message-bubble {
+    border-radius: var(--radius-md);
+    padding: 16px 24px;
+    font-size: 15px;
+    line-height: 1.6;
+    position: relative;
+    max-width: 100%;
+    color: var(--text-main);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.message img {
+    max-width: 100%;
+}
+
+.role-user {
+    align-items: flex-end;
+}
+
+.role-user .message-header {
+    flex-direction: row-reverse;
+}
+
+/* User Content Wrapper: Holds all message parts on the right */
+.user-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 85%;
+    align-items: flex-end; /* Align bubbles to right by default */
+}
+
+/* Align Drive Document Card to the left of the user wrapper */
+.user-content-wrapper .drive-document-card {
+    align-self: flex-start;
+}
+
+/* Standard user text bubbles remain right-aligned within wrapper (or full width of wrapper) */
+.user-content-wrapper .message-bubble {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-top-right-radius: 2px;
+    width: 100%;
+}
+
+.role-model {
+    align-items: flex-start;
+}
+
+.role-model .message-bubble {
+    padding-left: 0;
+    background: transparent;
+    width: 100%;
+}
+
+.role-model .message-header i {
+    color: var(--accent-primary);
+    font-size: 16px;
+}
+
+.thought-message .message-bubble {
+    background: var(--thought-bg);
+    border: 1px dashed var(--thought-border);
+    color: var(--thought-text);
+    padding: 16px;
+    font-style: italic;
+}
+
+.thought-message .message-header {
+    cursor: pointer;
+    user-select: none;
+}
+
+.thought-message .message-header:hover {
+    opacity: 0.8;
+}
+
+.thought-icon-rotate {
+    transition: transform 0.2s;
+    display: inline-block;
+}
+
+.thought-message.collapsed .message-bubble {
+    display: none;
+}
+
+.thought-message.collapsed {
+    margin-bottom: 0;
+    opacity: 0.7;
+}
+
+.inline-img {
+    max-width: 400px;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+    cursor: zoom-in;
+    border: 1px solid var(--border-subtle);
+    transition: transform 0.2s;
+}
+
+.inline-img:hover {
+    transform: scale(1.01);
+}
+
+.message-bubble a {
+    color: var(--accent-primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.message-bubble a:hover {
+    color: var(--text-main);
+}
+
+.message-tooltip {
+    position: absolute;
+    top: 32px;
+    right: 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    display: flex;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+
+.thought-message.collapsed .message-tooltip {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.message-tooltip::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    bottom: -10px;
+    left: -10px;
+    right: -10px;
+    z-index: -1;
+}
+
+.message:hover .message-tooltip, .message-tooltip:hover {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.tooltip-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tooltip-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-main);
+}
+
+.tooltip-btn:first-child {
+    border-top-left-radius: var(--radius-sm);
+    border-bottom-left-radius: var(--radius-sm);
+}
+
+.tooltip-btn:last-child {
+    border-top-right-radius: var(--radius-sm);
+    border-bottom-right-radius: var(--radius-sm);
+}
+
+/* --- Drive Document/Image Card --- */
+.drive-document-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    width: fit-content;
+    max-width: 100%;
+}
+
+.drive-doc-icon {
+    font-size: 24px;
+    color: var(--text-muted);
+    background: var(--bg-app);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+.drive-doc-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.drive-doc-title {
+    font-weight: 600;
+    color: var(--text-main);
+    display: block;
+}
+
+.drive-doc-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.drive-doc-actions {
+    display: flex;
+    gap: 8px;
+}
+
+
+/* --- Code Blocks Architecture --- */
+.code-block-wrapper {
+    background: var(--bg-code);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    margin: 16px 0;
+    position: relative;
+    max-width: 100%;
+}
+
+.code-header {
+    background: var(--bg-code-header);
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-subtle);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    border-top-left-radius: var(--radius-md);
+    border-top-right-radius: var(--radius-md);
+    transition: border-radius 0.2s;
+}
+
+/* Flatten top corners when sticky */
+.code-header.is-sticky {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+pre {
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow-x: auto;
+    background: transparent !important;
+    border-bottom-left-radius: var(--radius-md);
+    border-bottom-right-radius: var(--radius-md);
+}
+
+/* Sticky Sentinel - Placed absolutely at top of wrapper */
+.sticky-sentinel {
+    position: absolute;
+    top: -1px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    pointer-events: none;
+}
+
+/* Scrollable Code Logic */
+body.scrollable-codeblocks pre {
+    max-height: 400px;
+}
+
+/* Wrap Code Logic */
+body.wrap-codeblocks pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.code-block-wrapper.collapsed pre {
+    display: none;
+}
+
+.code-block-wrapper.collapsed {
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.code-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.collapse-code-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.collapse-code-btn i {
+    transition: transform 0.2s;
+}
+
+.code-block-wrapper.collapsed .collapse-code-btn i {
+    transform: rotate(-90deg);
+}
+
+.collapse-code-btn:hover {
+    color: white;
+}
+
+.lang-tag {
+    color: #94a3b8;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.copy-btn {
+    background: transparent;
+    border: 1px solid #475569;
+    color: #cbd5e1;
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    background: #334155;
+    color: white;
+    border-color: #64748b;
+}
+
+pre code {
+    font-family: var(--font-mono) !important;
+    font-size: 13px !important;
+    padding: 16px !important;
+    color: #e2e8f0;
+    display: block;
+}
