@@ -617,8 +617,14 @@ export function showLoading() { els.loading.classList.remove('hidden'); }
 export function hideLoading() { els.loading.classList.add('hidden'); }
 
 export function toggleSidebar() {
-    els.sidebar.classList.toggle('open');
-    els.sidebarOverlay.classList.toggle('open');
+    if (window.innerWidth <= 768) {
+        // Mobile: Overlay Drawer
+        els.sidebar.classList.toggle('open');
+        els.sidebarOverlay.classList.toggle('open');
+    } else {
+        // Desktop: Push/Collapse
+        els.sidebar.classList.toggle('collapsed');
+    }
 }
 
 export function updateFilename(name) {
@@ -637,10 +643,10 @@ export function renderMetadata(metaHtml) {
 }
 
 export function showMediaButton(show) {
-    const btn = document.getElementById('mediaGalleryBtn');
-    if(btn) {
-        if(show) btn.classList.remove('hidden');
-        else btn.classList.add('hidden');
+    const widget = document.getElementById('media-widget');
+    if(widget) {
+        if(show) widget.classList.remove('hidden');
+        else widget.classList.add('hidden');
     }
 }
 
