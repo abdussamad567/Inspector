@@ -1,12 +1,17 @@
 #sidebar {
     min-width: var(--sidebar-width);
+    width: var(--sidebar-width);
     background: var(--bg-sidebar);
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
     z-index: 20;
-    transition: transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+    transition: margin-left 0.3s ease, transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+#sidebar.collapsed {
+    margin-left: calc(var(--sidebar-width) * -1);
 }
 
 .sidebar-top {
@@ -419,6 +424,15 @@ button.search-toggle.active {
     align-items: center;
     min-width: 0;
     gap: 24px;
+    overflow: hidden;
+}
+
+.toolbar-left {
+    flex: 1;
+}
+
+.file-info {
+    flex-shrink: 1;
 }
 
 .filename {
@@ -499,9 +513,8 @@ button.search-toggle.active {
     display: none;
 }
 
-#nav-widget {
+#nav-widget, #media-widget {
     position: fixed;
-    bottom: 30px;
     right: 30px;
     display: flex;
     flex-direction: column;
@@ -509,7 +522,15 @@ button.search-toggle.active {
     z-index: 50;
 }
 
-#nav-widget button {
+#nav-widget {
+    bottom: 30px;
+}
+
+#media-widget {
+    top: 80px; /* Below toolbar */
+}
+
+#nav-widget button, #media-widget button {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -525,7 +546,7 @@ button.search-toggle.active {
     transition: all 0.2s;
 }
 
-#nav-widget button:hover {
+#nav-widget button:hover, #media-widget button:hover {
     background: var(--accent-primary);
     color: var(--bg-surface);
     border-color: var(--accent-primary);
@@ -550,12 +571,75 @@ button.search-toggle.active {
 }
 
 /* Responsive */
+
+/* Toolbar Responsive Logic */
+@media (max-width: 1450px) {
+    #shareBtnWrapper {
+        display: none !important;
+    }
+}
+
+@media (max-width: 1000px) {
+    .desktop-only {
+        display: none !important;
+    }
+
+    .toolbar {
+        padding: 0 16px;
+    }
+
+    .toolbar-left {
+        gap: 12px;
+    }
+    
+    .file-info {
+        display: none;
+    }
+}
+
 .mobile-only {
     display: none;
 }
 
 #sidebar-toggle-btn {
-    display: none;
+    /* Ensure toggle is visible on desktop for collapse feature */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 4px;
+    flex-shrink: 0;
+}
+
+#sidebar-toggle-btn:hover {
+    color: var(--text-main);
+    background: var(--hover-bg);
+}
+
+/* Responsive Toolbar Logic */
+@media (max-width: 1150px) {
+    #shareBtnWrapper {
+        display: none !important;
+    }
+}
+
+@media (max-width: 1300px) {
+    .desktop-only {
+        display: none !important;
+    }
+    
+    .toolbar-left, .file-info {
+        gap: 12px;
+    }
+    
+    .toolbar {
+        padding: 0 16px;
+    }
 }
 
 #sidebar-overlay {
@@ -571,11 +655,12 @@ button.search-toggle.active {
     transition: opacity 0.3s;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 864px) {
     #sidebar {
         position: fixed;
         height: 100%;
         transform: translateX(-100%);
+        margin-left: 0; /* Override desktop collapse margin */
     }
 
     #sidebar.open {
@@ -585,10 +670,6 @@ button.search-toggle.active {
     #sidebar-overlay.open {
         display: block;
         opacity: 1;
-    }
-
-    #sidebar-toggle-btn {
-        display: block;
     }
 
     .mobile-only {
@@ -613,6 +694,10 @@ button.search-toggle.active {
 
     #nav-widget {
         bottom: 20px;
+        right: 20px;
+    }
+
+    #media-widget {
         right: 20px;
     }
 
