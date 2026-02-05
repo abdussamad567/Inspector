@@ -263,7 +263,10 @@ function navigateMessages(direction) {
     const messages = Array.from(document.querySelectorAll('.message'));
     if (messages.length === 0) return;
 
-    const containerTop = els.scrollContainer.scrollTop;
+    const sc = els.scrollContainer;
+    const containerTop = sc.scrollTop;
+    const isAtBottom = Math.abs(sc.scrollHeight - sc.clientHeight - sc.scrollTop) < 5;
+
     let currentIndex = -1;
     for (let i = 0; i < messages.length; i++) {
         if (messages[i].offsetTop >= containerTop - 20) {
@@ -272,6 +275,10 @@ function navigateMessages(direction) {
         }
     }
     if (currentIndex === -1) currentIndex = messages.length - 1;
+
+    if (direction === 1 && isAtBottom) {
+        currentIndex = messages.length - 1;
+    }
 
     let nextIndex = currentIndex + direction;
 
