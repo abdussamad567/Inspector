@@ -1,6 +1,5 @@
 #sidebar {
     min-width: var(--sidebar-width);
-    width: var(--sidebar-width);
     background: var(--bg-sidebar);
     border-right: 1px solid var(--border-subtle);
     display: flex;
@@ -393,6 +392,34 @@ button.search-toggle.active {
 .footer-btn:hover {
     color: var(--text-main);
     background: var(--hover-bg);
+}
+
+.icon-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-badge {
+    position: absolute;
+    background: var(--bg-sidebar);
+    aspect-ratio: 1 / 1;
+    height: 1.125em; /* Using em relative to icon font size */
+    width: auto;
+    min-width: 1.125em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    top: 0;
+    left: 0;
+    translate: -50% -50%;
+    border-radius: 50%;
+    font-size: 0.75em;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    color: inherit;
+    z-index: 1;
 }
 
 #workspace {

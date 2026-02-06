@@ -9,20 +9,69 @@ export function parseConversation(rawJson) {
     const chunks = data.chunkedPrompt?.chunks || [];
     const prompts = [];
     
-    chunks.forEach((chunk, index) => {
-        // Identify User Prompts - logic simplified to catch ANY user content
+    for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
         if (chunk.role === 'user') {
             // Check if it's the start of a user turn (prev chunk was model or start of file)
-            if (index === 0 || chunks[index - 1].role !== 'user') {
+            if (i === 0 || chunks[i - 1].role !== 'user') {
+                let text = chunk.text || "";
+                let hasMedia = isMediaChunk(chunk);
+                
+                let mediaCount = 0;
+                let mediaTypes = [];
+
+                const processChunkMedia = (c) => {
+                    if (c.inlineData || c.inlineImage || c.driveImage) {
+                        mediaCount++;
+                        mediaTypes.push('Image');
+                    } else if (c.driveVideo) {
+                        mediaCount++;
+                        mediaTypes.push('Video');
+                    } else if (c.inlineAudio || c.driveAudio) {
+                        mediaCount++;
+                        mediaTypes.push('Audio');
+                    } else if (c.driveDocument || c.driveFile || c.inlineFile) {
+                        mediaCount++;
+                        const f = c.driveDocument || c.driveFile || c.inlineFile;
+                        const mime = (f.mimeType || '').toLowerCase();
+                        if (mime.includes('pdf')) mediaTypes.push('PDF');
+                        else if (mime.includes('csv')) mediaTypes.push('CSV');
+                        else if (mime.includes('image')) mediaTypes.push('Image');
+                        else if (mime.includes('video')) mediaTypes.push('Video');
+                        else if (mime.includes('audio')) mediaTypes.push('Audio');
+                        else if (mime.includes('text/plain')) mediaTypes.push('TXT');
+                        else mediaTypes.push('File');
+                    }
+                };
+
+                processChunkMedia(chunk);
+
+                // Aggregate text/media from subsequent user chunks in the same turn
+                let j = i + 1;
+                while (j < chunks.length && chunks[j].role === 'user') {
+                    const next = chunks[j];
+                    if (next.text) text += (text ? " " : "") + next.text;
+                    if (isMediaChunk(next)) hasMedia = true;
+                    processChunkMedia(next);
+                    j++;
+                }
+
                 prompts.push({
-                    ...chunk,
-                    originalIndex: index
+                    originalIndex: i,
+                    text: text,
+                    hasMedia: hasMedia,
+                    mediaCount: mediaCount,
+                    mediaTypes: mediaTypes
                 });
             }
         }
-    });
+    }
     
     return { data, prompts };
+}
+
+function isMediaChunk(chunk) {
+    return !!(chunk.inlineData || chunk.inlineImage || chunk.inlineFile || chunk.driveDocument || chunk.driveImage || chunk.driveVideo || chunk.driveAudio || chunk.driveFile);
 }
 
 export function getCleanJSON(parsedData) {

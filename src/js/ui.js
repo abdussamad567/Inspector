@@ -669,8 +669,41 @@ export function populateSidebar(prompts, onPromptClick) {
     prompts.forEach((p, index) => {
         const btn = document.createElement('button');
         btn.className = 'prompt-item';
-        const promptText = p.text || "[Uploaded File]";
-        btn.innerHTML = `<i class="ph ph-chat-circle"></i> ${truncate(promptText, 35)}`;
+        
+        const mediaCount = p.mediaCount || 0;
+        let promptText = p.text ? p.text.trim() : "";
+        
+        // --- Icon Logic ---
+        let iconHtml = '';
+        const baseIconClass = (mediaCount > 0) ? "ph ph-paperclip" : "ph ph-chat-circle";
+        
+        if (mediaCount > 1) {
+            // Icon + Badge
+            iconHtml = `<i class="${baseIconClass} icon-wrapper"><span class="icon-badge">${mediaCount}</span></i>`;
+        } else {
+            // Just Icon
+            iconHtml = `<i class="${baseIconClass}"></i>`;
+        }
+
+        // --- Label Logic ---
+        if (!promptText) {
+            if (mediaCount > 0) {
+                const types = p.mediaTypes || [];
+                const uniqueTypes = [...new Set(types)];
+                
+                if (uniqueTypes.length === 1) {
+                    const type = uniqueTypes[0];
+                    const suffix = mediaCount > 1 ? 's' : '';
+                    promptText = `[Uploaded ${mediaCount > 1 ? mediaCount + ' ' : ''}${type}${suffix}]`;
+                } else {
+                    promptText = `[Uploaded ${mediaCount} Files]`;
+                }
+            } else {
+                promptText = "[Empty Message]";
+            }
+        }
+        
+        btn.innerHTML = `${iconHtml} ${truncate(promptText, 35)}`;
         btn.title = promptText;
         btn.dataset.index = index;
         btn.onclick = () => onPromptClick(index);
