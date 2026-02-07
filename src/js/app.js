@@ -523,19 +523,27 @@ function renameCurrentFile(newName) {
         if (conflictingFile && conflictingFile.id !== state.currentFileRecordId) {
             UI.showConflictModal({ currentName: newName, conflictingFile }, {
                 onRenameAnyways: () => {
-                    let increment = 2;
-                    const findNext = (base) => {
-                        const candidate = `${base} (${increment})`;
-                        findFileByName(candidate, (conflict) => {
-                            if (conflict) {
-                                increment++;
-                                findNext(base);
-                            } else {
-                                performRename(candidate);
-                            }
-                        });
-                    };
-                    findNext(newName);
+                    // Check if the original name is now available (resolved in another tab)
+                    findFileByName(newName, (conflict) => {
+                        if (!conflict || conflict.id === state.currentFileRecordId) {
+                            performRename(newName);
+                            return;
+                        }
+
+                        let increment = 2;
+                        const findNext = (base) => {
+                            const candidate = `${base} (${increment})`;
+                            findFileByName(candidate, (innerConflict) => {
+                                if (innerConflict) {
+                                    increment++;
+                                    findNext(base);
+                                } else {
+                                    performRename(candidate);
+                                }
+                            });
+                        };
+                        findNext(newName);
+                    });
                 },
                 onOpenConflicting: (file) => {
                     const url = new URL(window.location.href);
