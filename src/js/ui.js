@@ -634,9 +634,32 @@ export function toggleSidebar() {
     }
 }
 
-export function updateFilename(name) {
+export function updateFilename(name, driveId = null) {
     els.filenameDisplay.textContent = truncate(name, 64);
     els.filenameDisplay.title = name;
+
+    const container = document.getElementById('file-info-container');
+    const popover = document.getElementById('file-info-popover');
+    const openBtn = document.getElementById('open-in-ai-studio-btn');
+    const copyBtn = document.getElementById('copy-file-id-btn');
+
+    if (driveId) {
+        container.classList.add('has-id');
+        popover.classList.remove('hidden');
+        
+        openBtn.href = `https://aistudio.google.com/prompts/${driveId}`;
+        
+        // Remove old listener to prevent duplicates
+        const newCopyBtn = copyBtn.cloneNode(true);
+        copyBtn.parentNode.replaceChild(newCopyBtn, copyBtn);
+        
+        newCopyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(driveId).then(() => showToast("ID copied to clipboard"));
+        });
+    } else {
+        container.classList.remove('has-id');
+        popover.classList.add('hidden');
+    }
 }
 
 export function renderMetadata(metaHtml) {

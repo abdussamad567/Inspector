@@ -10,6 +10,7 @@ const state = {
     parsedData: null,
     currentPrompts: [],
     currentFileName: "Untitled",
+    currentFileId: null,
     rawContent: null,
     isScrollMode: false,
     focusIndex: 0,
@@ -76,22 +77,24 @@ function handleInitialLoad() {
 function handleFile(file) {
     UI.showLoading();
     const reader = new FileReader();
-    reader.onload = (e) => handleText(e.target.result, file.name);
+    reader.onload = (e) => handleText(e.target.result, file.name, null);
     reader.readAsText(file);
 }
 
-function handleText(text, name) {
+function handleText(text, name, driveId = null) {
     try {
         const result = parseConversation(text);
         state.parsedData = result.data;
         state.currentPrompts = result.prompts;
         state.currentFileName = name;
+        state.currentFileId = driveId;
         state.rawContent = text;
         
         saveFileToHistory({
             name,
             data: result.data,
-            raw: text
+            raw: text,
+            driveId: driveId
         }, () => loadHistory());
         
         processAndRender();
@@ -106,6 +109,7 @@ function handleText(text, name) {
 function loadFileFromRecord(record) {
     UI.showLoading();
     state.currentFileName = record.name;
+    state.currentFileId = record.driveId || null;
     state.parsedData = record.data;
     state.rawContent = record.raw || JSON.stringify(record.data, null, 2);
     
@@ -120,8 +124,9 @@ function loadFileFromRecord(record) {
 function loadFromDrive(id) {
     UI.showLoading();
     updateUrl(id);
+    state.currentFileId = id;
     fetchDriveFile(id, {
-        onSuccess: (text) => handleText(text, `Drive File (${id})`),
+        onSuccess: (text) => handleText(text, `Drive File (${id})`, id),
         onError: (err) => {
             UI.hideLoading();
             if (err.message === "Private File / HTML content") {
@@ -134,7 +139,7 @@ function loadFromDrive(id) {
 }
 
 function processAndRender() {
-    UI.updateFilename(state.currentFileName);
+    UI.updateFilename(state.currentFileName, state.currentFileId);
     document.title = `${state.currentFileName} | Inspector`;
     
     // Metadata
@@ -291,7 +296,7 @@ function setupEventListeners() {
             else UI.showError("Link Error", "Could not parse ID from link.");
         } else {
             updateUrl(null);
-            handleText(trimmed, "Pasted content");
+            handleText(trimmed, "Pasted content", null);
         }
     }
 

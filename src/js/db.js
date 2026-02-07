@@ -28,6 +28,7 @@ export function saveFileToHistory(fileObj, callback) {
         name: fileObj.name,
         data: fileObj.data,
         raw: fileObj.raw,
+        driveId: fileObj.driveId || null,
         timestamp: Date.now(),
         pinned: fileObj.pinned || false
     };
