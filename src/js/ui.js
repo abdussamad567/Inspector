@@ -639,13 +639,17 @@ export function toggleSidebar() {
     }
 }
 
-export function updateRenamingUI(name, isDriveFile) {
+export function updateRenamingUI(name, driveId = null) {
     const nameToDisplay = name || 'No file loaded';
     els.filenameDisplay.textContent = truncate(nameToDisplay, 64);
     els.filenameDisplay.title = nameToDisplay;
 
     const wrapper = document.querySelector('.filename-wrapper');
     const scrapeBtn = document.getElementById('scrape-name-btn');
+    const container = document.getElementById('file-info-container');
+    const popover = document.getElementById('file-info-popover');
+    const openBtn = document.getElementById('open-in-ai-studio-btn');
+    const copyBtn = document.getElementById('copy-file-id-btn');
 
     if (nameToDisplay === 'No file loaded') {
         wrapper.classList.add('is-empty');
@@ -653,18 +657,7 @@ export function updateRenamingUI(name, isDriveFile) {
         wrapper.classList.remove('is-empty');
     }
 
-    scrapeBtn.classList.toggle('hidden', !isDriveFile);
-}
-
-export function updateFilename(name, driveId = null) {
-    const nameToDisplay = name || 'No file loaded';
-    els.filenameDisplay.textContent = truncate(nameToDisplay, 64);
-    els.filenameDisplay.title = nameToDisplay;
-
-    const container = document.getElementById('file-info-container');
-    const popover = document.getElementById('file-info-popover');
-    const openBtn = document.getElementById('open-in-ai-studio-btn');
-    const copyBtn = document.getElementById('copy-file-id-btn');
+    scrapeBtn.classList.toggle('hidden', !driveId);
 
     if (driveId) {
         container.classList.add('has-id');

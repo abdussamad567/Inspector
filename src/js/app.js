@@ -148,7 +148,7 @@ function loadFromDrive(id) {
 }
 
 function processAndRender() {
-    UI.updateRenamingUI(state.currentFileName, !!state.currentFileId);
+    UI.updateRenamingUI(state.currentFileName, state.currentFileId);
     document.title = `${state.currentFileName} | Inspector`;
     
     // Metadata
@@ -224,11 +224,19 @@ async function handleRename(newName) {
     findFileByName(newName, (existingFile) => {
         if (existingFile && existingFile.id !== state.currentFileRecordId) {
             UI.showConflictResolver(newName, existingFile,
-                () => finalizeRename(state.currentFileRecordId, newName + ' (2)'),
+                () => finalizeRenameWithConflictCheck(state.currentFileRecordId, newName),
                 (otherNewName, currentNewName) => {
-                    updateFileNameInDB(existingFile.id, otherNewName, () => {
-                        finalizeRename(state.currentFileRecordId, currentNewName);
-                    });
+                    if (otherNewName === currentNewName) {
+                        finalizeRenameWithConflictCheck(state.currentFileRecordId, currentNewName);
+                    } else {
+                        if (otherNewName !== existingFile.name) {
+                            updateFileNameInDB(existingFile.id, otherNewName, () => {
+                                finalizeRenameWithConflictCheck(state.currentFileRecordId, currentNewName);
+                            });
+                        } else {
+                            finalizeRenameWithConflictCheck(state.currentFileRecordId, currentNewName);
+                        }
+                    }
                 }
             );
         } else {
@@ -240,11 +248,25 @@ async function handleRename(newName) {
 function finalizeRename(id, name) {
     updateFileNameInDB(id, name, () => {
         state.currentFileName = name;
-        UI.updateRenamingUI(name, !!state.currentFileId);
+        UI.updateRenamingUI(name, state.currentFileId);
         document.title = `${name} | Inspector`;
         loadHistory();
         showToast('Renamed successfully');
     });
+}
+
+function finalizeRenameWithConflictCheck(id, targetName) {
+    const tryRename = (name, num) => {
+        const candidate = num === 1 ? name : `${name} (${num})`;
+        findFileByName(candidate, (exists) => {
+            if (!exists || exists.id === id) {
+                finalizeRename(id, candidate);
+            } else {
+                tryRename(name, num + 1);
+            }
+        });
+    };
+    tryRename(targetName, 1);
 }
 
 async function handleScrape() {
