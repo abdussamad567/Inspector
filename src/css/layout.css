@@ -429,7 +429,6 @@ button.search-toggle.active {
     background: var(--bg-app);
     position: relative;
     transition: background-color 0.3s ease;
-    overflow: hidden;
 }
 
 .toolbar {
@@ -560,7 +559,7 @@ button.search-toggle.active {
     pointer-events: none;
 }
 
-.filename-wrapper:hover .edit-icon,
+.filename-wrapper:not(.is-empty):hover .edit-icon,
 .filename-input:not(.hidden) ~ .edit-icon {
     opacity: 1;
 }

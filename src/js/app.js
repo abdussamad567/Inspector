@@ -573,36 +573,40 @@ function performRename(newName) {
 
 async function handleScrapeName() {
     if (!state.currentFileId) return;
-    showToast("Attempting to get name...");
+    showToast("Attempting to fetch name...");
 
-    const originalUrl = `https://aistudio.google.com/prompts/${state.currentFileId}`;
+    const originalUrl = `https://drive.google.com/file/d/${state.currentFileId}/edit`;
     const proxyUrl = `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(originalUrl)}`;
 
     try {
         const response = await fetch(proxyUrl);
         const html = await response.text();
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        // Scrape instructions: use .toolbar-container h1 or just h1.
-        const h1 = doc.querySelector('.toolbar-container h1') || doc.querySelector('h1');
-        if (h1 && h1.textContent) {
-            const name = h1.textContent.trim();
-            if (name) {
-                const input = document.getElementById('filename-input');
-                const display = document.getElementById('filename-display');
-                display.style.display = 'none';
-                input.style.display = 'block';
-                input.value = name;
-                input.focus();
-                input.select();
-                showToast("Name found! Press Enter to confirm.");
-            } else {
-                showToast("Could not find a name on the page.");
-            }
+
+        let name = (doc.querySelector('head > meta[property="og:title"]')?.getAttribute('content')) ||
+                   (doc.querySelector('body > meta[itemprop="name"]')?.getAttribute('content')) ||
+                   doc.title;
+
+        if (name && name.endsWith(" - Google Drive")) {
+            name = name.slice(0, -" - Google Drive".length);
+        }
+
+        if (name && name !== "Google Drive: Term of Service Verification") {
+            const input = document.getElementById('filename-input');
+            const display = document.getElementById('filename-display');
+
+            display.classList.add('hidden');
+            input.classList.remove('hidden');
+            input.value = name;
+            input.focus();
+            input.select();
+
+            showToast("Name found! Press Enter to confirm.");
         } else {
-            showToast("Could not find a name on the page.");
+            showToast("Could not find a name on the page. Private file?");
         }
     } catch (e) {
         console.error("Scraping failed", e);
-        showToast("Failed to scrape name. Private file?");
+        showToast("Failed to scrape name. Network error?");
     }
 }

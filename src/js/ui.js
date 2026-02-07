@@ -637,11 +637,16 @@ export function toggleSidebar() {
 }
 
 export function updateFilename(name, driveId = null) {
-    els.filenameDisplay.textContent = truncate(name, 64);
-    els.filenameDisplay.title = name;
-    els.filenameInput.value = name;
+    const isNoFile = name === "No file loaded" || !name;
+    els.filenameDisplay.textContent = truncate(name || "No file loaded", 64);
+    els.filenameDisplay.title = name || "No file loaded";
+    els.filenameInput.value = name || "";
 
     const container = document.getElementById('file-info-container');
+    const filenameWrapper = container.querySelector('.filename-wrapper');
+    if (filenameWrapper) {
+        filenameWrapper.classList.toggle('is-empty', isNoFile);
+    }
     const popover = document.getElementById('file-info-popover');
     const openBtn = document.getElementById('open-in-ai-studio-btn');
     const copyBtn = document.getElementById('copy-file-id-btn');
@@ -691,7 +696,7 @@ export function setupRenamingUI(onRename, onScrape) {
     });
 
     els.filenameInput.addEventListener('blur', () => {
-        onRename(els.filenameInput.value);
+        // Revert on blur as requested
         exitRename();
     });
 
