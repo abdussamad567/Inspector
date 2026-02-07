@@ -552,6 +552,18 @@ button.search-toggle.active {
     cursor: pointer;
 }
 
+.edit-icon {
+    font-size: 14px;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.filename-wrapper:hover .edit-icon {
+    opacity: 1;
+}
+
 .filename-input {
     background: var(--bg-surface);
     border: 1px solid var(--border-subtle);

@@ -704,21 +704,26 @@ export function setupRenamingUI(onRename, onScrape) {
 }
 
 export function showConflictModal(conflictInfo, handlers) {
-    const { currentName, conflictingFile, onRenameAnyways, onOpenConflicting, onChangeOtherName } = handlers;
+    const { currentName, conflictingFile } = conflictInfo;
+    const { onRenameAnyways, onOpenConflicting, onChangeOtherName } = handlers;
 
-    showError("Name Conflict", `The name "${currentName}" is already taken.`, false);
+    showError("Name Conflict", `The name is already taken.`, false);
 
     const conflictSection = document.getElementById('conflict-resolution-section');
     conflictSection.classList.remove('hidden');
 
-    const expandable = document.getElementById('other-name-expandable');
+    const initialActions = document.getElementById('conflict-initial-actions');
+    const expandable = document.getElementById('conflict-resolver-expandable');
+
+    initialActions.classList.remove('hidden');
     expandable.classList.add('hidden');
 
     const anywaysBtn = document.getElementById('rename-anyways-btn');
+    const resolveBtn = document.getElementById('resolve-conflicts-btn');
     const openBtn = document.getElementById('open-conflicting-btn');
-    const changeOtherBtn = document.getElementById('change-other-name-btn');
-    const confirmOtherBtn = document.getElementById('confirm-other-rename-btn');
+    const renameBothBtn = document.getElementById('rename-both-btn');
     const otherInput = document.getElementById('other-filename-input');
+    const currentInput = document.getElementById('current-filename-input');
 
     anywaysBtn.onclick = () => {
         conflictSection.classList.add('hidden');
@@ -726,28 +731,31 @@ export function showConflictModal(conflictInfo, handlers) {
         onRenameAnyways();
     };
 
+    resolveBtn.onclick = () => {
+        initialActions.classList.add('hidden');
+        expandable.classList.remove('hidden');
+
+        otherInput.value = "";
+        otherInput.placeholder = conflictingFile.name;
+
+        currentInput.value = currentName;
+        currentInput.placeholder = els.filenameDisplay.title;
+
+        currentInput.focus();
+        currentInput.select();
+    };
+
     openBtn.onclick = () => {
-        conflictSection.classList.add('hidden');
-        els.errorModal.classList.add('hidden');
         onOpenConflicting(conflictingFile);
     };
 
-    changeOtherBtn.onclick = () => {
-        expandable.classList.toggle('hidden');
-        if (!expandable.classList.contains('hidden')) {
-            otherInput.value = conflictingFile.name;
-            otherInput.focus();
-            otherInput.select();
-        }
-    };
+    renameBothBtn.onclick = () => {
+        const newOtherName = otherInput.value.trim() || conflictingFile.name;
+        const newCurrentName = currentInput.value.trim();
 
-    confirmOtherBtn.onclick = () => {
-        const newOtherName = otherInput.value.trim();
-        if (newOtherName && newOtherName !== conflictingFile.name) {
-            conflictSection.classList.add('hidden');
-            els.errorModal.classList.add('hidden');
-            onChangeOtherName(conflictingFile, newOtherName);
-        }
+        conflictSection.classList.add('hidden');
+        els.errorModal.classList.add('hidden');
+        onChangeOtherName(conflictingFile, newOtherName, newCurrentName);
     };
 
     // Override the dismiss button to also hide conflict section

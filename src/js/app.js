@@ -545,9 +545,13 @@ function renameCurrentFile(newName) {
                     url.searchParams.set('localId', file.id);
                     window.open(url.toString(), '_blank');
                 },
-                onChangeOtherName: (file, newOtherName) => {
+                onChangeOtherName: (file, newOtherName, newCurrentName) => {
                     updateFileNameInDB(file.id, newOtherName, () => {
-                        performRename(newName);
+                        if (newCurrentName) {
+                            performRename(newCurrentName);
+                        } else {
+                            loadHistory();
+                        }
                     });
                 }
             });

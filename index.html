@@ -99,16 +99,22 @@
                 </div>
             </div>
             <div id="conflict-resolution-section" class="hidden" style="padding: 0 20px 20px 20px;">
-                <div class="conflict-actions">
+                <div id="conflict-initial-actions" class="conflict-actions">
                     <button id="rename-anyways-btn" class="btn btn-sm btn-secondary">Rename Anyways</button>
-                    <button id="open-conflicting-btn" class="btn btn-sm btn-secondary">Open conflicting file</button>
-                    <button id="change-other-name-btn" class="btn btn-sm btn-secondary">Change other file's name</button>
+                    <button id="resolve-conflicts-btn" class="btn btn-sm btn-primary">Resolve Conflicts</button>
+                </div>
 
-                    <div id="other-name-expandable" class="hidden conflict-expandable">
-                        <div class="conflict-input-group">
-                            <label for="other-filename-input">New name for the other file:</label>
-                            <input type="text" id="other-filename-input" class="filename-input" spellcheck="false" style="margin-bottom: 10px;">
-                            <button id="confirm-other-rename-btn" class="btn btn-sm btn-primary">Confirm Both Renames</button>
+                <div id="conflict-resolver-expandable" class="hidden conflict-expandable">
+                    <div class="conflict-input-group">
+                        <label for="other-filename-input">New name for the other file:</label>
+                        <input type="text" id="other-filename-input" class="filename-input" spellcheck="false" style="margin-bottom: 10px;">
+
+                        <label for="current-filename-input">New name for this current file:</label>
+                        <input type="text" id="current-filename-input" class="filename-input" spellcheck="false" style="margin-bottom: 15px;">
+
+                        <div class="conflict-resolver-footer" style="display: flex; justify-content: space-between; gap: 10px;">
+                            <button id="open-conflicting-btn" class="btn btn-sm btn-secondary">Open conflicting file (in new tab)</button>
+                            <button id="rename-both-btn" class="btn btn-sm btn-primary">Rename Both</button>
                         </div>
                     </div>
                 </div>
@@ -350,6 +356,7 @@
                 <div class="file-info" id="file-info-container">
                     <div class="filename-wrapper">
                         <span id="filename-display" class="filename" title="Click to rename">No file loaded</span>
+                        <i class="ph ph-pencil-simple edit-icon"></i>
                         <input type="text" id="filename-input" class="filename-input hidden" spellcheck="false">
                         <button id="scrape-name-btn" class="icon-btn hidden" title="Attempt to get name">
                             <i class="ph ph-file-cloud"></i>
