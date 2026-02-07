@@ -332,8 +332,20 @@
                 <button id="sidebar-toggle-btn" class="icon-btn">
                     <i class="ph ph-list"></i>
                 </button>
-                <div class="file-info">
+                <div class="file-info" id="file-info-container">
                     <span id="filename-display" class="filename">No file loaded</span>
+                    
+                    <div id="file-info-popover" class="file-info-popover hidden">
+                        <div class="popover-arrow"></div>
+                        <div class="popover-content file-actions">
+                            <button id="copy-file-id-btn" class="btn btn-sm btn-secondary" title="Copy ID">
+                                <i class="ph ph-copy"></i> Copy ID
+                            </button>
+                            <a id="open-in-ai-studio-btn" href="#" target="_blank" class="btn btn-sm btn-primary" title="Open in Google AI Studio">
+                                <i class="ph ph-arrow-square-out"></i> Open in Google AI Studio
+                            </a>
+                        </div>
+                    </div>
                 </div>
                 <div class="btn-group hidden" id="downloadGroup">
                     <button id="downloadBtn" class="btn btn-secondary btn-left" title="Download Original JSON">
