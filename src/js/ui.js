@@ -820,86 +820,81 @@ export function setupRenamingUI(onRename, onScrape) {
 }
 
 export function showConflictResolver(targetName, existingFile, currentFileName, onRenameAnyways, onRenameBoth) {
-    const extra = document.createElement('div');
-    extra.className = 'conflict-section-padding';
-    extra.innerHTML = `
-        <div id="conflict-resolver-expandable" class="hidden conflict-expandable">
-            <div class="conflict-input-group">
-                <label for="other-filename-input">New name for the other file:</label>
-                <input type="text" id="other-filename-input" class="filename-input mb-10" spellcheck="false">
+    const container = document.createElement('div');
+    container.className = 'conflict-resolver-container';
 
-                <label for="current-filename-input">New name for this current file:</label>
-                <input type="text" id="current-filename-input" class="filename-input mb-15" spellcheck="false">
+    container.innerHTML = `
+        <div id="conflict-initial-actions" class="flex-column gap-10 mt-10">
+            <button id="resolve-conflicts-trigger" class="btn btn-primary w-full">Resolve Conflicts</button>
+            <button id="rename-anyways-btn" class="btn btn-secondary w-full">Rename Anyways</button>
+        </div>
+        <div id="conflict-resolver-expandable" class="hidden mt-15">
+            <div class="conflict-input-group">
+                <label class="input-label" for="other-filename-input">New name for the other file:</label>
+                <input type="text" id="other-filename-input" class="filename-input mb-10 w-full" spellcheck="false">
+
+                <label class="input-label" for="current-filename-input">New name for this current file:</label>
+                <input type="text" id="current-filename-input" class="filename-input mb-15 w-full" spellcheck="false">
+            </div>
+            <div class="conflict-resolution-actions flex-column gap-10">
+                <button id="rename-both-btn" class="btn btn-primary w-full">Rename Both</button>
+                <button id="open-conflicting-btn" class="btn btn-secondary w-full">Open conflicting file</button>
             </div>
         </div>
     `;
 
-    function setupInitialState() {
-        showModal({
-            title: 'File Name Conflict',
-            message: `The name is already taken.`,
-            headerColor: '#ef4444',
-            iconClass: 'ph-fill ph-warning-circle',
-            extraContent: extra,
-            primaryBtn: {
-                text: 'Resolve Conflicts',
-                onClick: () => {
-                    extra.querySelector('#conflict-resolver-expandable').classList.remove('hidden');
-                    const otherInput = extra.querySelector('#other-filename-input');
-                    const currentInput = extra.querySelector('#current-filename-input');
+    const resolveTrigger = container.querySelector('#resolve-conflicts-trigger');
+    const renameAnywaysBtn = container.querySelector('#rename-anyways-btn');
+    const expandable = container.querySelector('#conflict-resolver-expandable');
+    const initialActions = container.querySelector('#conflict-initial-actions');
 
-                    // Logic:
-                    // Other file: placeholder only
-                    otherInput.placeholder = existingFile.name;
-                    otherInput.value = '';
+    const otherInput = container.querySelector('#other-filename-input');
+    const currentInput = container.querySelector('#current-filename-input');
+    const renameBothBtn = container.querySelector('#rename-both-btn');
+    const openConflictingBtn = container.querySelector('#open-conflicting-btn');
 
-                    // Current file: value = targetName, placeholder = currentFileName
-                    currentInput.placeholder = currentFileName;
-                    currentInput.value = targetName;
+    resolveTrigger.onclick = () => {
+        initialActions.classList.add('hidden');
+        expandable.classList.remove('hidden');
 
-                    // Re-show modal with new buttons
-                    showModal({
-                        title: 'Resolve Conflicts',
-                        message: `Rename files to resolve the conflict.`,
-                        headerColor: '#ef4444',
-                        iconClass: 'ph-fill ph-warning-circle',
-                        extraContent: extra,
-                        primaryBtn: {
-                            text: 'Rename Both',
-                            onClick: () => {
-                                const otherNewName = otherInput.value.trim() || existingFile.name;
-                                const currentNewName = currentInput.value.trim() || currentFileName;
-                                if (otherNewName && currentNewName) {
-                                    onRenameBoth(otherNewName, currentNewName);
-                                    return true; // Close modal
-                                }
-                                return false; // Stay open
-                            }
-                        },
-                        secondaryBtn: {
-                            text: 'Open conflicting file',
-                            onClick: () => {
-                                window.open(`${window.location.origin}${window.location.pathname}?h=${existingFile.id}`, '_blank');
-                                return false; // Keep modal open
-                            }
-                        }
-                    });
+        otherInput.placeholder = existingFile.name;
+        otherInput.value = '';
+        currentInput.placeholder = currentFileName;
+        currentInput.value = targetName;
 
-                    setTimeout(() => currentInput.focus(), 50);
-                    return false; // Keep open for now (we called showModal again)
-                }
-            },
-            secondaryBtn: {
-                text: 'Rename Anyways',
-                onClick: () => {
-                    onRenameAnyways();
-                    return true;
-                }
+        setTimeout(() => currentInput.focus(), 50);
+    };
+
+    renameAnywaysBtn.onclick = () => {
+        onRenameAnyways();
+        document.getElementById('generic-modal').classList.add('hidden');
+    };
+
+    renameBothBtn.onclick = () => {
+        const otherNewName = otherInput.value.trim() || existingFile.name;
+        const currentNewName = currentInput.value.trim() || currentFileName;
+        if (otherNewName && currentNewName) {
+            if (otherNewName === currentNewName) {
+                showToast('Names must be different', 'error');
+                return;
             }
-        });
-    }
+            onRenameBoth(otherNewName, currentNewName);
+            document.getElementById('generic-modal').classList.add('hidden');
+        }
+    };
 
-    setupInitialState();
+    openConflictingBtn.onclick = () => {
+        window.open(`${window.location.origin}${window.location.pathname}?h=${existingFile.id}`, '_blank');
+    };
+
+    showModal({
+        title: 'File Name Conflict',
+        message: `The name is already taken.`,
+        headerColor: '#ef4444',
+        iconClass: 'ph-fill ph-warning-circle',
+        extraContent: container,
+        dismissBtn: { text: 'Cancel' }
+    });
 }
 
 export function renderMetadata(metaHtml) {
@@ -1681,6 +1676,9 @@ export function renderMediaGallery(mediaItems, onDownload) {
         downloadBtn.disabled = selectedIndices.size === 0;
         if(selectedIndices.size === 0) downloadBtn.classList.add('btn-secondary'); 
         else downloadBtn.classList.remove('btn-secondary');
+
+        const allSelected = selectedIndices.size === mediaItems.length && mediaItems.length > 0;
+        selectAllBtn.textContent = allSelected ? "Unselect All" : "Select All";
     }
     
     selectAllBtn.onclick = () => {

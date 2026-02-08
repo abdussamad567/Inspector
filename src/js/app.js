@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadHistory();
         handleInitialLoad();
     });
+    UI.initAllUI();
     setupEventListeners();
     setupThemeLogic();
     UI.setupRenamingUI(handleRename, attemptScrapeName);
@@ -231,9 +232,25 @@ async function attemptScrapeName() {
         const doc = parser.parseFromString(html, 'text/html');
         const h1 = doc.querySelector('.toolbar-container h1');
         if (h1 && h1.textContent.trim()) {
-            handleRename(h1.textContent.trim());
+            const scrapedName = h1.textContent.trim();
+            if (scrapedName !== state.currentFileName) {
+                // Populate the input for user review instead of direct save
+                UI.updateRenamingUI(scrapedName, state.currentFileId);
+                const input = document.getElementById('filename-input');
+                const display = document.getElementById('filename-display');
+                if (input && display) {
+                    display.classList.add('hidden');
+                    input.classList.remove('hidden');
+                    input.value = scrapedName;
+                    input.focus();
+                    input.select();
+                    showToast('Name scraped. Press Enter to confirm.');
+                }
+            } else {
+                showToast('Name is already up to date');
+            }
         } else {
-            UI.showToast("Could not find name in page");
+            showToast('Could not find name in page', 'error');
         }
     } catch (e) {
         console.error("Scrape failed", e);
@@ -241,6 +258,18 @@ async function attemptScrapeName() {
     } finally {
         UI.hideLoading();
     }
+}
+
+async function getUniqueName(name) {
+    let baseName = name;
+    let counter = 1;
+    let currentName = name;
+
+    while (await findFileByName(currentName)) {
+        counter++;
+        currentName = `${baseName} (${counter})`;
+    }
+    return currentName;
 }
 
 async function handleRename(newName) {
@@ -267,9 +296,10 @@ async function handleRename(newName) {
     });
 }
 
-function finalizeRenameWithConflictCheck(id, newName) {
-    renameFileInDB(id, newName, () => {
-        state.currentFileName = newName;
+async function finalizeRenameWithConflictCheck(id, newName) {
+    const uniqueName = await getUniqueName(newName);
+    renameFileInDB(id, uniqueName, () => {
+        state.currentFileName = uniqueName;
         processAndRender();
         loadHistory();
     });
