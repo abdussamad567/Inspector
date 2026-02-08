@@ -109,7 +109,7 @@ const els = {
 };
 
 // --- Initialization & Settings Controls ---
-document.addEventListener('DOMContentLoaded', () => {
+export function initAllUI() {
     try {
         initSettingsUI();
         initHistoryUI();
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
         console.error("Critical Initialization Error:", e);
     }
-});
+}
 
 function initSettingsUI() {
     // Width Slider
@@ -136,32 +136,27 @@ function initSettingsUI() {
     // --- Toggles ---
     
     // Helper for simple boolean toggles
-    const setupSimpleToggle = (id, prefKey, onChange) => {
+    const setupSimpleToggle = (id, prefKey, storageKey, onChange) => {
         const el = document.getElementById(id);
         if (!el) return; // Prevent crash if element is missing
         
+        const sKey = storageKey || prefKey;
         el.checked = prefs[prefKey];
         el.addEventListener('change', (e) => {
             prefs[prefKey] = e.target.checked;
-            localStorage.setItem(prefKey, JSON.stringify(e.target.checked));
+            localStorage.setItem(sKey, JSON.stringify(e.target.checked));
             if(onChange) onChange(e.target.checked);
         });
     };
 
     // Auto Restore
-    setupSimpleToggle('autoRestoreToggle', 'openLastFileOnStartup');
-    // Note: The HTML only has 'autoRestoreToggle', but original code bound 'autoRestoreContent' to the same or a missing one.
-    // If 'autoRestoreContent' ID doesn't exist, we skip binding to prevent crash.
-    setupSimpleToggle('autoRestoreContent', 'autoRestoreContent');
+    setupSimpleToggle('autoRestoreToggle', 'openLastFileOnStartup', 'autoRestore');
+    setupSimpleToggle('autoRestoreContent', 'autoRestoreContent', 'autoRestoreContent');
 
-    // Thinking Mode (Inverted Logic)
+    // Thinking Mode Initial State (Event handled in app.js for re-rendering)
     const thinkingToggle = document.getElementById('thinkingModeToggle');
     if (thinkingToggle) {
         thinkingToggle.checked = !prefs.collapseThoughts; 
-        thinkingToggle.addEventListener('change', (e) => {
-            prefs.collapseThoughts = !e.target.checked;
-            localStorage.setItem('collapseThoughts', JSON.stringify(prefs.collapseThoughts));
-        });
     }
 
     // Metadata Toggle (Inverted Logic)
@@ -180,7 +175,7 @@ function initSettingsUI() {
     }
 
     // Code State Persistence
-    setupSimpleToggle('codePersistenceToggle', 'preserveCodeState', (checked) => {
+    setupSimpleToggle('codePersistenceToggle', 'preserveCodeState', 'preserveCodeState', (checked) => {
         if (!checked) {
             const currentFile = els.filenameDisplay.textContent;
             if (currentFile && currentFile !== 'No file loaded') {
@@ -189,11 +184,11 @@ function initSettingsUI() {
         }
     });
 
-    setupSimpleToggle('scrollableCodeToggle', 'isScrollableCode', (checked) => {
+    setupSimpleToggle('scrollableCodeToggle', 'isScrollableCode', 'scrollableCode', (checked) => {
         document.body.classList.toggle('scrollable-codeblocks', checked);
     });
 
-    setupSimpleToggle('wrapCodeToggle', 'isWrapCode', (checked) => {
+    setupSimpleToggle('wrapCodeToggle', 'isWrapCode', 'wrapCode', (checked) => {
         document.body.classList.toggle('wrap-codeblocks', checked);
     });
 
@@ -661,47 +656,64 @@ export function showModal(config) {
     };
     footer.appendChild(dismissBtn);
 
-    const middleBtnConfig = config.secondaryBtn;
-    const rightBtnConfig = config.primaryBtn;
+    const primary = config.primaryBtn;
+    const secondary = config.secondaryBtn;
 
-    if (middleBtnConfig && rightBtnConfig) {
-        // 3 Buttons layout
-        const middleBtn = document.createElement('button');
-        middleBtn.className = middleBtnConfig.className || 'btn btn-sm btn-secondary';
-        middleBtn.innerHTML = middleBtnConfig.text;
-        middleBtn.classList.add('btn-centered'); // CSS will handle centering
-        middleBtn.onclick = () => {
-            modal.classList.add('hidden');
-            if (middleBtnConfig.onClick) middleBtnConfig.onClick();
+    if (primary && secondary) {
+        // 3 Buttons: [Dismiss Left] [Primary Center] [Secondary Right]
+        const centerBtn = (primary.href) ? document.createElement('a') : document.createElement('button');
+        centerBtn.className = primary.className || 'btn btn-sm btn-primary';
+        centerBtn.classList.add('btn-centered');
+        centerBtn.innerHTML = primary.text;
+        if (primary.href) {
+            centerBtn.href = primary.href;
+            centerBtn.target = primary.target || '_blank';
+        }
+        centerBtn.onclick = (e) => {
+            let shouldClose = !primary.href;
+            if (primary.onClick) {
+                const result = primary.onClick(e);
+                if (result === false) shouldClose = false;
+            }
+            if (shouldClose) modal.classList.add('hidden');
         };
 
-        const rightBtn = (rightBtnConfig.href) ? document.createElement('a') : document.createElement('button');
-        rightBtn.className = rightBtnConfig.className || 'btn btn-sm btn-primary';
-        rightBtn.innerHTML = rightBtnConfig.text;
-        if (rightBtnConfig.href) {
-            rightBtn.href = rightBtnConfig.href;
-            rightBtn.target = rightBtnConfig.target || '_blank';
+        const rightBtn = (secondary.href) ? document.createElement('a') : document.createElement('button');
+        rightBtn.className = secondary.className || 'btn btn-sm btn-secondary';
+        rightBtn.innerHTML = secondary.text;
+        if (secondary.href) {
+            rightBtn.href = secondary.href;
+            rightBtn.target = secondary.target || '_blank';
         }
         rightBtn.onclick = (e) => {
-            if (!rightBtnConfig.href) modal.classList.add('hidden');
-            if (rightBtnConfig.onClick) rightBtnConfig.onClick(e);
+            let shouldClose = !secondary.href;
+            if (secondary.onClick) {
+                const result = secondary.onClick(e);
+                if (result === false) shouldClose = false;
+            }
+            if (shouldClose) modal.classList.add('hidden');
         };
 
-        footer.appendChild(middleBtn);
+        footer.appendChild(centerBtn);
         footer.appendChild(rightBtn);
-    } else if (middleBtnConfig || rightBtnConfig) {
-        // 2 Buttons layout
-        const btnConfig = middleBtnConfig || rightBtnConfig;
+    } else if (primary || secondary) {
+        // 2 Buttons: [Dismiss Left] [Primary or Secondary Right]
+        const btnConfig = primary || secondary;
+        const isPrimary = !!primary;
         const btn = (btnConfig.href) ? document.createElement('a') : document.createElement('button');
-        btn.className = btnConfig.className || (rightBtnConfig ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-secondary');
-        btn.innerHTML = btnConfig.text; // Support icons in text
+        btn.className = btnConfig.className || (isPrimary ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-secondary');
+        btn.innerHTML = btnConfig.text;
         if (btnConfig.href) {
             btn.href = btnConfig.href;
             btn.target = btnConfig.target || '_blank';
         }
         btn.onclick = (e) => {
-            if (!btnConfig.href) modal.classList.add('hidden');
-            if (btnConfig.onClick) btnConfig.onClick(e);
+            let shouldClose = !btnConfig.href;
+            if (btnConfig.onClick) {
+                const result = btnConfig.onClick(e);
+                if (result === false) shouldClose = false;
+            }
+            if (shouldClose) modal.classList.add('hidden');
         };
         footer.appendChild(btn);
     }
@@ -805,11 +817,6 @@ export function showConflictResolver(currentName, existingFile, onRenameAnyways,
     const extra = document.createElement('div');
     extra.className = 'conflict-section-padding';
     extra.innerHTML = `
-        <div id="conflict-initial-actions" class="conflict-actions">
-            <button id="rename-anyways-btn" class="btn btn-sm btn-secondary">Rename Anyways</button>
-            <button id="resolve-conflicts-btn" class="btn btn-sm btn-primary">Resolve Conflicts</button>
-        </div>
-
         <div id="conflict-resolver-expandable" class="hidden conflict-expandable">
             <div class="conflict-input-group">
                 <label for="other-filename-input">New name for the other file:</label>
@@ -817,51 +824,69 @@ export function showConflictResolver(currentName, existingFile, onRenameAnyways,
 
                 <label for="current-filename-input">New name for this current file:</label>
                 <input type="text" id="current-filename-input" class="filename-input mb-15" spellcheck="false">
-
-                <div class="conflict-resolver-footer flex-between-gap">
-                    <button id="open-conflicting-btn" class="btn btn-sm btn-secondary">Open conflicting file (in new tab)</button>
-                    <button id="rename-both-btn" class="btn btn-sm btn-primary">Rename Both</button>
-                </div>
             </div>
         </div>
     `;
 
-    extra.querySelector('#rename-anyways-btn').onclick = () => {
-        els.genericModal.classList.add('hidden');
-        onRenameAnyways();
-    };
+    function setupInitialState() {
+        showModal({
+            title: 'File Name Conflict',
+            message: `A file named "${currentName}" already exists in your history.`,
+            headerColor: '#ef4444',
+            iconClass: 'ph-fill ph-warning-circle',
+            extraContent: extra,
+            primaryBtn: {
+                text: 'Resolve Conflicts',
+                onClick: () => {
+                    extra.querySelector('#conflict-resolver-expandable').classList.remove('hidden');
+                    const otherInput = extra.querySelector('#other-filename-input');
+                    const currentInput = extra.querySelector('#current-filename-input');
+                    otherInput.value = existingFile.name;
+                    currentInput.value = currentName;
 
-    extra.querySelector('#resolve-conflicts-btn').onclick = () => {
-        extra.querySelector('#conflict-initial-actions').classList.add('hidden');
-        extra.querySelector('#conflict-resolver-expandable').classList.remove('hidden');
-        const otherInput = extra.querySelector('#other-filename-input');
-        const currentInput = extra.querySelector('#current-filename-input');
-        otherInput.value = existingFile.name;
-        currentInput.value = currentName;
-        otherInput.focus();
-    };
+                    // Re-show modal with new buttons
+                    showModal({
+                        title: 'Resolve Conflicts',
+                        message: `Rename both files to resolve the conflict.`,
+                        headerColor: '#ef4444',
+                        iconClass: 'ph-fill ph-warning-circle',
+                        extraContent: extra,
+                        primaryBtn: {
+                            text: 'Rename Both',
+                            onClick: () => {
+                                const otherNewName = otherInput.value.trim();
+                                const currentNewName = currentInput.value.trim();
+                                if (otherNewName && currentNewName) {
+                                    onRenameBoth(otherNewName, currentNewName);
+                                    return true; // Close modal
+                                }
+                                return false; // Stay open
+                            }
+                        },
+                        secondaryBtn: {
+                            text: 'Open conflicting file',
+                            onClick: () => {
+                                window.open(`${window.location.origin}${window.location.pathname}?h=${existingFile.id}`, '_blank');
+                                return false; // Keep modal open
+                            }
+                        }
+                    });
 
-    extra.querySelector('#rename-both-btn').onclick = () => {
-        const otherNewName = extra.querySelector('#other-filename-input').value.trim();
-        const currentNewName = extra.querySelector('#current-filename-input').value.trim();
-        if (otherNewName && currentNewName) {
-            els.genericModal.classList.add('hidden');
-            onRenameBoth(otherNewName, currentNewName);
-        }
-    };
+                    setTimeout(() => otherInput.focus(), 50);
+                    return false; // Keep open for now (we called showModal again)
+                }
+            },
+            secondaryBtn: {
+                text: 'Rename Anyways',
+                onClick: () => {
+                    onRenameAnyways();
+                    return true;
+                }
+            }
+        });
+    }
 
-    extra.querySelector('#open-conflicting-btn').onclick = () => {
-        els.genericModal.classList.add('hidden');
-        window.open(`${window.location.origin}${window.location.pathname}?h=${existingFile.id}`, '_blank');
-    };
-
-    showModal({
-        title: 'File Name Conflict',
-        message: `A file named "${currentName}" already exists in your history.`,
-        headerColor: '#ef4444',
-        iconClass: 'ph-fill ph-warning-circle',
-        extraContent: extra
-    });
+    setupInitialState();
 }
 
 export function renderMetadata(metaHtml) {
@@ -1792,28 +1817,21 @@ export function showError(title, message, showGif, retryCallback, fileId) {
         extraContent: gifContent
     };
 
-    if (retryCallback) {
-        config.primaryBtn = {
-            text: 'Retry',
-            onClick: retryCallback
+    if (retryCallback && fileId) {
+        config.primaryBtn = { text: 'Retry', onClick: retryCallback };
+        config.secondaryBtn = {
+            text: 'Open <i class="ph ph-arrow-square-out"></i>',
+            href: `https://drive.google.com/file/d/${fileId}/view?usp=sharing`,
+            className: 'btn btn-secondary btn-sm'
         };
-    }
-
-    if (fileId) {
-        if (retryCallback) {
-            config.secondaryBtn = { text: 'Retry', onClick: retryCallback };
-            config.primaryBtn = {
-                text: 'Open <i class="ph ph-arrow-square-out"></i>',
-                href: `https://drive.google.com/file/d/${fileId}/view?usp=sharing`,
-                className: 'btn btn-secondary btn-sm'
-            };
-        } else {
-            config.primaryBtn = {
-                text: 'Open <i class="ph ph-arrow-square-out"></i>',
-                href: `https://drive.google.com/file/d/${fileId}/view?usp=sharing`,
-                className: 'btn btn-secondary btn-sm'
-            };
-        }
+    } else if (retryCallback) {
+        config.primaryBtn = { text: 'Retry', onClick: retryCallback };
+    } else if (fileId) {
+        config.primaryBtn = {
+            text: 'Open <i class="ph ph-arrow-square-out"></i>',
+            href: `https://drive.google.com/file/d/${fileId}/view?usp=sharing`,
+            className: 'btn btn-secondary btn-sm'
+        };
     }
 
     showModal(config);

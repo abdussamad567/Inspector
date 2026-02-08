@@ -23,6 +23,7 @@ const state = {
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     initPreferences();
+    UI.initAllUI();
     initDB(() => {
         loadHistory();
         handleInitialLoad();

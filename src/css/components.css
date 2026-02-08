@@ -416,8 +416,8 @@ input:checked + .slider:before {
     text-align: center;
 }
 
-/* Modals */
-#error-modal, #confirm-modal {
+/* Modals Overlay */
+#image-modal, #text-viewer-modal, #media-modal, #media-player-modal, #generic-modal {
     position: fixed;
     top: 0;
     left: 0;
@@ -425,18 +425,14 @@ input:checked + .slider:before {
     height: 100%;
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(2px);
-    z-index: 3000;
+    z-index: 2000;
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 40px;
 }
 
-/* Confirm Modal */
-#confirm-modal .error-header {
-    background: var(--accent-surface);
-}
-
-/* Error Modal */
+/* Error Modal / Generic Dialog */
 .error-dialog {
     background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
@@ -543,16 +539,9 @@ input:checked + .slider:before {
     }
 }
 
-/* Modals */
-#image-modal, #text-viewer-modal, #media-modal, #media-player-modal {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
-    z-index: 2000; display: flex; justify-content: center; align-items: center;
-    padding: 40px;
-}
 
-/* Ensure viewers appear above the gallery */
-#image-modal, #text-viewer-modal, #media-player-modal {
+/* Ensure viewers and generic notification appear above the gallery */
+#image-modal, #text-viewer-modal, #media-player-modal, #generic-modal {
     z-index: 2100;
 }
 
