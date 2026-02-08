@@ -495,6 +495,14 @@ input:checked + .slider:before {
     justify-content: space-between;
     align-items: center;
     background: var(--bg-app);
+    position: relative;
+    min-height: 56px;
+}
+
+.btn-centered {
+    position: absolute !important;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 @keyframes popIn {

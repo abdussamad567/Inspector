@@ -26,18 +26,19 @@ export function showToast(message, iconClass = 'ph-fill ph-check-circle') {
     }
 }
 
-export function updateUrl(id) {
+export function updateUrl(id, localId = null) {
     try {
         const newUrl = new URL(window.location);
-        // Clear old params
-        newUrl.searchParams.delete('id');
-        newUrl.searchParams.delete('chat');
+        // Clear all possible ID params to start fresh
+        const paramsToRemove = ['id', 'chat', 'view', 'h', 'localId'];
+        paramsToRemove.forEach(p => newUrl.searchParams.delete(p));
 
-        if (id) {
+        if (localId) {
+            newUrl.searchParams.set('h', localId);
+        } else if (id) {
             newUrl.searchParams.set('view', id);
-        } else {
-            newUrl.searchParams.delete('view');
         }
+
         window.history.pushState({}, '', newUrl);
     } catch (e) {
         console.error("Failed to update URL", e);

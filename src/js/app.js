@@ -120,6 +120,7 @@ function handleText(text, name, driveId = null) {
         }, (id) => {
             state.currentFileRecordId = id;
             UI.setCurrentFileRecordId(id);
+            updateUrl(driveId, id);
             loadHistory();
         });
         
@@ -145,6 +146,7 @@ function loadFileFromRecord(record) {
     const result = parseConversation(state.rawContent);
     state.currentPrompts = result.prompts;
     
+    updateUrl(record.driveId, record.id);
     processAndRender();
     UI.hideLoading();
     loadHistory();

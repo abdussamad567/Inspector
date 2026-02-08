@@ -105,8 +105,7 @@ const els = {
     mediaModal: document.getElementById('media-modal'),
     mediaPlayerModal: document.getElementById('media-player-modal'),
     mediaPlayerContainer: document.getElementById('media-player-container'),
-    errorModal: document.getElementById('error-modal'),
-    confirmModal: document.getElementById('confirm-modal')
+    genericModal: document.getElementById('generic-modal')
 };
 
 // --- Initialization & Settings Controls ---
@@ -544,23 +543,10 @@ function initModals() {
         });
     }
 
-    // Error Modal
-    const closeErrorBtn = document.getElementById('close-error-btn');
-    if(closeErrorBtn) closeErrorBtn.addEventListener('click', () => els.errorModal.classList.add('hidden'));
-    
-    if(els.errorModal) {
-        els.errorModal.addEventListener('click', (e) => {
-            if(e.target === els.errorModal) els.errorModal.classList.add('hidden');
-        });
-    }
-
-    // Confirm Modal
-    const cancelConfirmBtn = document.getElementById('confirm-cancel-btn');
-    if(cancelConfirmBtn) cancelConfirmBtn.addEventListener('click', () => els.confirmModal.classList.add('hidden'));
-    
-    if(els.confirmModal) {
-        els.confirmModal.addEventListener('click', (e) => {
-            if(e.target === els.confirmModal) els.confirmModal.classList.add('hidden');
+    // Generic Modal
+    if(els.genericModal) {
+        els.genericModal.addEventListener('click', (e) => {
+            if(e.target === els.genericModal) els.genericModal.classList.add('hidden');
         });
     }
     
@@ -624,6 +610,104 @@ function initModals() {
 }
 
 // --- Main UI Exported Functions ---
+
+/**
+ * Generic Modal System
+ * @param {Object} config
+ * @param {string} config.title - Header title
+ * @param {string} config.message - Body text or HTML
+ * @param {string} config.headerColor - CSS background color for header
+ * @param {string} config.iconClass - Phosphor icon class for header
+ * @param {Object} config.primaryBtn - { text, onClick, className, href, target }
+ * @param {Object} config.secondaryBtn - { text, onClick, className }
+ * @param {Object} config.dismissBtn - { text, onClick }
+ * @param {Element} config.extraContent - Optional DOM element to inject into body
+ */
+export function showModal(config) {
+    const modal = els.genericModal;
+    const header = modal.querySelector('.error-header');
+    const title = header.querySelector('span');
+    const icon = header.querySelector('i');
+    const bodyText = document.getElementById('modal-message-text');
+    const extraContainer = document.getElementById('modal-extra-content');
+    const footer = document.getElementById('modal-footer');
+
+    // Reset
+    extraContainer.innerHTML = '';
+    extraContainer.classList.add('hidden');
+    footer.innerHTML = '';
+
+    // Set Header
+    title.textContent = config.title || 'Notification';
+    header.style.backgroundColor = config.headerColor || '#ef4444';
+    if (config.iconClass) icon.className = config.iconClass;
+    else icon.className = 'ph-fill ph-warning-circle';
+
+    // Set Body
+    bodyText.innerHTML = config.message || '';
+    if (config.extraContent) {
+        extraContainer.appendChild(config.extraContent);
+        extraContainer.classList.remove('hidden');
+    }
+
+    // Footer Buttons Logic
+    // Left: Dismiss (Always there)
+    const dismissBtn = document.createElement('button');
+    dismissBtn.className = 'btn btn-sm btn-secondary';
+    dismissBtn.textContent = (config.dismissBtn && config.dismissBtn.text) || 'Dismiss';
+    dismissBtn.onclick = () => {
+        modal.classList.add('hidden');
+        if (config.dismissBtn && config.dismissBtn.onClick) config.dismissBtn.onClick();
+    };
+    footer.appendChild(dismissBtn);
+
+    const middleBtnConfig = config.secondaryBtn;
+    const rightBtnConfig = config.primaryBtn;
+
+    if (middleBtnConfig && rightBtnConfig) {
+        // 3 Buttons layout
+        const middleBtn = document.createElement('button');
+        middleBtn.className = middleBtnConfig.className || 'btn btn-sm btn-secondary';
+        middleBtn.innerHTML = middleBtnConfig.text;
+        middleBtn.classList.add('btn-centered'); // CSS will handle centering
+        middleBtn.onclick = () => {
+            modal.classList.add('hidden');
+            if (middleBtnConfig.onClick) middleBtnConfig.onClick();
+        };
+
+        const rightBtn = (rightBtnConfig.href) ? document.createElement('a') : document.createElement('button');
+        rightBtn.className = rightBtnConfig.className || 'btn btn-sm btn-primary';
+        rightBtn.innerHTML = rightBtnConfig.text;
+        if (rightBtnConfig.href) {
+            rightBtn.href = rightBtnConfig.href;
+            rightBtn.target = rightBtnConfig.target || '_blank';
+        }
+        rightBtn.onclick = (e) => {
+            if (!rightBtnConfig.href) modal.classList.add('hidden');
+            if (rightBtnConfig.onClick) rightBtnConfig.onClick(e);
+        };
+
+        footer.appendChild(middleBtn);
+        footer.appendChild(rightBtn);
+    } else if (middleBtnConfig || rightBtnConfig) {
+        // 2 Buttons layout
+        const btnConfig = middleBtnConfig || rightBtnConfig;
+        const btn = (btnConfig.href) ? document.createElement('a') : document.createElement('button');
+        btn.className = btnConfig.className || (rightBtnConfig ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-secondary');
+        btn.innerHTML = btnConfig.text; // Support icons in text
+        if (btnConfig.href) {
+            btn.href = btnConfig.href;
+            btn.target = btnConfig.target || '_blank';
+        }
+        btn.onclick = (e) => {
+            if (!btnConfig.href) modal.classList.add('hidden');
+            if (btnConfig.onClick) btnConfig.onClick(e);
+        };
+        footer.appendChild(btn);
+    }
+
+    modal.classList.remove('hidden');
+}
 
 export function showLoading() { els.loading.classList.remove('hidden'); }
 export function hideLoading() { els.loading.classList.add('hidden'); }
@@ -718,52 +802,66 @@ export function setupRenamingUI(onRename, onScrape) {
 }
 
 export function showConflictResolver(currentName, existingFile, onRenameAnyways, onRenameBoth) {
-    const errorText = document.getElementById('error-message-text');
-    const conflictSection = document.getElementById('conflict-resolution-section');
-    const initialActions = document.getElementById('conflict-initial-actions');
-    const resolverExpandable = document.getElementById('conflict-resolver-expandable');
+    const extra = document.createElement('div');
+    extra.className = 'conflict-section-padding';
+    extra.innerHTML = `
+        <div id="conflict-initial-actions" class="conflict-actions">
+            <button id="rename-anyways-btn" class="btn btn-sm btn-secondary">Rename Anyways</button>
+            <button id="resolve-conflicts-btn" class="btn btn-sm btn-primary">Resolve Conflicts</button>
+        </div>
 
-    const otherInput = document.getElementById('other-filename-input');
-    const currentInput = document.getElementById('current-filename-input');
+        <div id="conflict-resolver-expandable" class="hidden conflict-expandable">
+            <div class="conflict-input-group">
+                <label for="other-filename-input">New name for the other file:</label>
+                <input type="text" id="other-filename-input" class="filename-input mb-10" spellcheck="false">
 
-    errorText.textContent = `A file named "${currentName}" already exists in your history.`;
-    document.getElementById('retry-error-btn').classList.add('hidden');
-    document.getElementById('open-drive-error-btn').classList.add('hidden');
-    document.getElementById('error-gif-container').classList.add('hidden');
-    els.errorModal.classList.remove('hidden');
-    conflictSection.classList.remove('hidden');
-    initialActions.classList.remove('hidden');
-    resolverExpandable.classList.add('hidden');
+                <label for="current-filename-input">New name for this current file:</label>
+                <input type="text" id="current-filename-input" class="filename-input mb-15" spellcheck="false">
 
-    document.getElementById('rename-anyways-btn').onclick = () => {
-        els.errorModal.classList.add('hidden');
-        conflictSection.classList.add('hidden');
+                <div class="conflict-resolver-footer flex-between-gap">
+                    <button id="open-conflicting-btn" class="btn btn-sm btn-secondary">Open conflicting file (in new tab)</button>
+                    <button id="rename-both-btn" class="btn btn-sm btn-primary">Rename Both</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    extra.querySelector('#rename-anyways-btn').onclick = () => {
+        els.genericModal.classList.add('hidden');
         onRenameAnyways();
     };
 
-    document.getElementById('resolve-conflicts-btn').onclick = () => {
-        initialActions.classList.add('hidden');
-        resolverExpandable.classList.remove('hidden');
+    extra.querySelector('#resolve-conflicts-btn').onclick = () => {
+        extra.querySelector('#conflict-initial-actions').classList.add('hidden');
+        extra.querySelector('#conflict-resolver-expandable').classList.remove('hidden');
+        const otherInput = extra.querySelector('#other-filename-input');
+        const currentInput = extra.querySelector('#current-filename-input');
         otherInput.value = existingFile.name;
         currentInput.value = currentName;
         otherInput.focus();
     };
 
-    document.getElementById('rename-both-btn').onclick = () => {
-        const otherNewName = otherInput.value.trim();
-        const currentNewName = currentInput.value.trim();
+    extra.querySelector('#rename-both-btn').onclick = () => {
+        const otherNewName = extra.querySelector('#other-filename-input').value.trim();
+        const currentNewName = extra.querySelector('#current-filename-input').value.trim();
         if (otherNewName && currentNewName) {
-            els.errorModal.classList.add('hidden');
-            conflictSection.classList.add('hidden');
+            els.genericModal.classList.add('hidden');
             onRenameBoth(otherNewName, currentNewName);
         }
     };
 
-    document.getElementById('open-conflicting-btn').onclick = () => {
-        els.errorModal.classList.add('hidden');
-        conflictSection.classList.add('hidden');
+    extra.querySelector('#open-conflicting-btn').onclick = () => {
+        els.genericModal.classList.add('hidden');
         window.open(`${window.location.origin}${window.location.pathname}?h=${existingFile.id}`, '_blank');
     };
+
+    showModal({
+        title: 'File Name Conflict',
+        message: `A file named "${currentName}" already exists in your history.`,
+        headerColor: '#ef4444',
+        iconClass: 'ph-fill ph-warning-circle',
+        extraContent: extra
+    });
 }
 
 export function renderMetadata(metaHtml) {
@@ -1676,57 +1774,60 @@ function postProcessCodeBlocks() {
 // --- Helpers ---
 
 export function showError(title, message, showGif, retryCallback, fileId) {
-    els.errorModal.querySelector('.error-header span').textContent = title;
-    document.getElementById('error-message-text').textContent = message;
-    document.getElementById('error-gif-container').classList.toggle('hidden', !showGif);
-    
-    const retryBtn = document.getElementById('retry-error-btn');
-    const driveBtn = document.getElementById('open-drive-error-btn');
-    
-    const newRetry = retryBtn.cloneNode(true);
-    retryBtn.parentNode.replaceChild(newRetry, retryBtn);
-    
+    let gifContent = null;
+    if (showGif) {
+        gifContent = document.createElement('div');
+        gifContent.id = 'error-gif-container';
+        gifContent.innerHTML = `
+            <img src="./assets/share-instruction.gif" alt="Share Settings: Anyone with link">
+            <p>Ensure sharing is set to "Anyone with the link".</p>
+        `;
+    }
+
+    const config = {
+        title: title || 'System Notification',
+        message: message,
+        headerColor: '#ef4444',
+        iconClass: 'ph-fill ph-warning-circle',
+        extraContent: gifContent
+    };
+
     if (retryCallback) {
-        newRetry.classList.remove('hidden');
-        newRetry.addEventListener('click', () => {
-            els.errorModal.classList.add('hidden');
-            retryCallback();
-        });
-    } else {
-        newRetry.classList.add('hidden');
+        config.primaryBtn = {
+            text: 'Retry',
+            onClick: retryCallback
+        };
     }
 
     if (fileId) {
-        driveBtn.href = `https://drive.google.com/file/d/${fileId}/view?usp=sharing`;
-        driveBtn.classList.remove('hidden');
-    } else {
-        driveBtn.classList.add('hidden');
+        if (retryCallback) {
+            config.secondaryBtn = { text: 'Retry', onClick: retryCallback };
+            config.primaryBtn = {
+                text: 'Open <i class="ph ph-arrow-square-out"></i>',
+                href: `https://drive.google.com/file/d/${fileId}/view?usp=sharing`,
+                className: 'btn btn-secondary btn-sm'
+            };
+        } else {
+            config.primaryBtn = {
+                text: 'Open <i class="ph ph-arrow-square-out"></i>',
+                href: `https://drive.google.com/file/d/${fileId}/view?usp=sharing`,
+                className: 'btn btn-secondary btn-sm'
+            };
+        }
     }
 
-    els.errorModal.classList.remove('hidden');
+    showModal(config);
 }
 
 export function showConfirmModal(htmlMessage, onOk, onCancel) {
-    document.getElementById('confirm-message-text').innerHTML = htmlMessage;
-    
-    const okBtn = document.getElementById('confirm-ok-btn');
-    const cancelBtn = document.getElementById('confirm-cancel-btn');
-    const newOk = okBtn.cloneNode(true);
-    const newCancel = cancelBtn.cloneNode(true);
-    okBtn.parentNode.replaceChild(newOk, okBtn);
-    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
-    
-    newOk.addEventListener('click', () => {
-        els.confirmModal.classList.add('hidden');
-        if(onOk) onOk();
+    showModal({
+        title: 'Confirm Action',
+        message: htmlMessage,
+        headerColor: 'var(--accent-surface)',
+        iconClass: 'ph-fill ph-question',
+        dismissBtn: { text: 'Cancel', onClick: onCancel },
+        primaryBtn: { text: 'Load File', onClick: onOk }
     });
-    
-    newCancel.addEventListener('click', () => {
-        els.confirmModal.classList.add('hidden');
-        if(onCancel) onCancel();
-    });
-
-    els.confirmModal.classList.remove('hidden');
 }
 
 function getIconClassForExtension(ext, mimeType = '') {

@@ -83,62 +83,19 @@
         </div>
     </div>
 
-    <!-- Error Modal -->
-    <div id="error-modal" class="hidden">
+    <!-- Generic Modal -->
+    <div id="generic-modal" class="hidden">
         <div class="error-dialog">
             <div class="error-header">
                 <i class="ph-fill ph-warning-circle"></i>
-                <span>System Notification</span>
+                <span>Notification</span>
             </div>
             <div class="error-body">
-                <p id="error-message-text">An error occurred.</p>
-                <div id="error-gif-container" class="hidden">
-                    <img src="./assets/share-instruction.gif" alt="Share Settings: Anyone with link">
-                    <p>Ensure sharing is set to "Anyone with the link".</p>
-                </div>
+                <p id="modal-message-text"></p>
+                <div id="modal-extra-content" class="hidden"></div>
             </div>
-            <div id="conflict-resolution-section" class="hidden conflict-section-padding">
-                <div id="conflict-initial-actions" class="conflict-actions">
-                    <button id="rename-anyways-btn" class="btn btn-sm btn-secondary">Rename Anyways</button>
-                    <button id="resolve-conflicts-btn" class="btn btn-sm btn-primary">Resolve Conflicts</button>
-                </div>
-
-                <div id="conflict-resolver-expandable" class="hidden conflict-expandable">
-                    <div class="conflict-input-group">
-                        <label for="other-filename-input">New name for the other file:</label>
-                        <input type="text" id="other-filename-input" class="filename-input mb-10" spellcheck="false">
-
-                        <label for="current-filename-input">New name for this current file:</label>
-                        <input type="text" id="current-filename-input" class="filename-input mb-15" spellcheck="false">
-
-                        <div class="conflict-resolver-footer flex-between-gap">
-                            <button id="open-conflicting-btn" class="btn btn-sm btn-secondary">Open conflicting file (in new tab)</button>
-                            <button id="rename-both-btn" class="btn btn-sm btn-primary">Rename Both</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="error-footer">
-                <button id="close-error-btn" class="btn btn-sm btn-secondary">Dismiss</button>
-                <button id="retry-error-btn" class="btn btn-sm btn-primary">Retry</button>
-                <a id="open-drive-error-btn" href="#" target="_blank" class="btn btn-secondary btn-sm hidden">Open<i class="ph ph-arrow-square-out"></i></a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Confirmation Modal -->
-    <div id="confirm-modal" class="hidden">
-        <div class="error-dialog">
-            <div class="error-header">
-                <i class="ph-fill ph-question"></i>
-                <span>Confirm Action</span>
-            </div>
-            <div class="error-body">
-                <p id="confirm-message-text">Do you want to proceed?</p>
-            </div>
-            <div class="error-footer gap-10">
-                <button id="confirm-cancel-btn" class="btn btn-secondary btn-sm">Cancel</button>
-                <button id="confirm-ok-btn" class="btn btn-primary btn-sm">Load File</button>
+            <div class="error-footer" id="modal-footer">
+                <!-- Buttons injected by JS -->
             </div>
         </div>
     </div>
