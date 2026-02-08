@@ -21,21 +21,51 @@ export function initDB(onLoadCallback) {
 
 export function saveFileToHistory(fileObj, callback) {
     if (!db) return;
-    const transaction = db.transaction([STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    const record = {
-        id: fileObj.id || Date.now(),
-        name: fileObj.name,
-        data: fileObj.data,
-        raw: fileObj.raw,
-        driveId: fileObj.driveId || null,
-        timestamp: Date.now(),
-        pinned: fileObj.pinned || false
+
+    const doSave = (finalName) => {
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const record = {
+            id: fileObj.id || Date.now(),
+            name: finalName,
+            data: fileObj.data,
+            raw: fileObj.raw,
+            driveId: fileObj.driveId || null,
+            timestamp: Date.now(),
+            pinned: fileObj.pinned || false
+        };
+        store.put(record);
+        transaction.oncomplete = () => {
+            cleanupHistory();
+            if (callback) callback(record.id, finalName);
+        };
     };
-    store.put(record);
-    transaction.oncomplete = () => {
-        cleanupHistory();
-        if (callback) callback(record.id);
+
+    if (!fileObj.id) {
+        getUniqueName(fileObj.name, (uniqueName) => {
+            doSave(uniqueName);
+        });
+    } else {
+        doSave(fileObj.name);
+    }
+}
+
+export function getUniqueName(name, callback) {
+    if (!db) return callback(name);
+    const store = db.transaction([STORE_NAME], 'readonly').objectStore(STORE_NAME);
+    store.getAll().onsuccess = (e) => {
+        const files = e.target.result;
+        let baseName = name;
+        let counter = 1;
+        let currentName = name;
+
+        const exists = (n) => files.some(f => f.name === n);
+
+        while (exists(currentName)) {
+            counter++;
+            currentName = `${baseName} (${counter})`;
+        }
+        callback(currentName);
     };
 }
 
@@ -47,9 +77,8 @@ export function fetchHistory(callback) {
         const files = e.target.result;
         const pinned = files.filter(f => f.pinned).sort((a, b) => b.timestamp - a.timestamp);
         let unpinned = files.filter(f => !f.pinned).sort((a, b) => b.timestamp - a.timestamp);
-        // De-duplicate unpinned by name for display
-        const uniqueRecent = unpinned.filter((f, index, self) => index === self.findIndex(t => t.name === f.name));
-        callback(uniqueRecent.slice(0, 5), pinned);
+
+        callback(unpinned.slice(0, 10), pinned);
     };
 }
 
@@ -85,24 +114,36 @@ export function updateFileNameInDB(id, newName, callback) {
             store.put(data);
         }
     };
-    tx.oncomplete = callback;
+    tx.oncomplete = () => {
+        if (callback) callback();
+    };
 }
 
 export function getFileById(id, callback) {
     if (!db) return;
     const req = db.transaction([STORE_NAME], 'readonly').objectStore(STORE_NAME).get(id);
-    req.onsuccess = (e) => callback(e.target.result);
+    req.onsuccess = (e) => {
+        if (callback) callback(e.target.result);
+    };
 }
 
 export function findFileByName(name, callback) {
-    if (!db) return;
-    const req = db.transaction([STORE_NAME], 'readonly').objectStore(STORE_NAME).getAll();
-    req.onsuccess = (e) => {
-        const files = e.target.result;
-        // Find most recent file with this name
-        const match = files.filter(f => f.name === name).sort((a, b) => b.timestamp - a.timestamp)[0];
-        callback(match);
-    };
+    if (!db) return callback ? callback(null) : Promise.resolve(null);
+
+    const promise = new Promise((resolve) => {
+        const req = db.transaction([STORE_NAME], 'readonly').objectStore(STORE_NAME).getAll();
+        req.onsuccess = (e) => {
+            const files = e.target.result;
+            const match = files.filter(f => f.name === name).sort((a, b) => b.timestamp - a.timestamp)[0];
+            resolve(match);
+        };
+    });
+
+    if (callback) {
+        promise.then(callback);
+    } else {
+        return promise;
+    }
 }
 
 export function clearRecentsInDB(callback) {
@@ -125,11 +166,8 @@ function cleanupHistory() {
         const files = e.target.result;
         let unpinned = files.filter(f => !f.pinned).sort((a, b) => b.timestamp - a.timestamp);
 
-        const seenNames = new Set();
-        for (const f of unpinned) {
-            if (!seenNames.has(f.name)) seenNames.add(f.name);
-            else store.delete(f.id);
+        if (unpinned.length > 50) {
+            unpinned.slice(50).forEach(f => store.delete(f.id));
         }
-        if (unpinned.length > 20) unpinned.slice(20).forEach(f => store.delete(f.id));
     };
 }

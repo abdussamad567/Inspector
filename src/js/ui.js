@@ -302,7 +302,10 @@ function navigateMessages(direction) {
     } else {
         if (nextIndex < 0) {
             if (_appState.focusIndex > 0) {
-                _renderConversation(_appState.focusIndex - 1);
+                const prevIdx = _appState.focusIndex - 1;
+                if (typeof _renderConversation === 'function') _renderConversation(prevIdx);
+                else if (_renderConversation && _renderConversation.onPromptClick) _renderConversation.onPromptClick(prevIdx);
+
                 setTimeout(() => els.scrollContainer.scrollTo({
                     top: els.scrollContainer.scrollHeight,
                     behavior: 'auto'
@@ -310,7 +313,9 @@ function navigateMessages(direction) {
             }
         } else if (nextIndex >= messages.length) {
             if (_appState.focusIndex < _appState.currentPrompts.length - 1) {
-                _renderConversation(_appState.focusIndex + 1);
+                const nextIdx = _appState.focusIndex + 1;
+                if (typeof _renderConversation === 'function') _renderConversation(nextIdx);
+                else if (_renderConversation && _renderConversation.onPromptClick) _renderConversation.onPromptClick(nextIdx);
             }
         } else {
             messages[nextIndex].scrollIntoView({
@@ -765,8 +770,8 @@ export function updateRenamingUI(name, driveId = null) {
         container.classList.add('has-id');
         popover.classList.remove('hidden');
         
-        openBtn.href = `https://aistudio.google.com/prompts/${driveId}`;
-        openBtn.title = `https://aistudio.google.com/prompts/${driveId}`;
+        openBtn.href = `https://aistudio.google.com/app/prompts/${driveId}`;
+        openBtn.title = `https://aistudio.google.com/app/prompts/${driveId}`;
         
         // Remove old listener to prevent duplicates
         const newCopyBtn = copyBtn.cloneNode(true);
@@ -868,16 +873,16 @@ export function showConflictResolver(targetName, existingFile, currentFileName, 
     };
 
     renameAnywaysBtn.onclick = () => {
-        onRenameAnyways();
         document.getElementById('generic-modal').classList.add('hidden');
+        onRenameAnyways();
     };
 
     renameBothBtn.onclick = () => {
         const otherNewName = otherInput.value.trim() || existingFile.name;
         const currentNewName = currentInput.value.trim() || currentFileName;
         if (otherNewName && currentNewName) {
-            onRenameBoth(otherNewName, currentNewName);
             document.getElementById('generic-modal').classList.add('hidden');
+            onRenameBoth(otherNewName, currentNewName);
         }
     };
 
@@ -973,8 +978,9 @@ export function setActiveSidebarItem(index) {
     if(target) target.classList.add('active');
 }
 
-export function renderHistoryLists(recentFiles, pinnedFiles, handlers) {
+export function renderHistoryLists(recentFiles, pinnedFiles, handlers, activeId = null) {
     const { onLoad, onTogglePin } = handlers;
+    if (activeId) currentFileRecordId = activeId;
     
     els.historySection.classList.toggle('hidden', recentFiles.length === 0 && pinnedFiles.length === 0);
     

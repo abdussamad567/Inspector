@@ -112,12 +112,12 @@ function handleText(text, name, driveId = null) {
             data: result.data,
             raw: text,
             driveId: driveId
-        }, (id) => {
+        }, (id, finalName) => {
             state.currentFileRecordId = id;
+            state.currentFileName = finalName;
             loadHistory();
+            processAndRender();
         });
-        
-        processAndRender();
         UI.hideLoading();
     } catch (e) {
         console.error(e);
@@ -139,6 +139,7 @@ function loadFileFromRecord(record) {
     state.currentPrompts = result.prompts;
     
     processAndRender();
+    loadHistory();
     UI.hideLoading();
 }
 
@@ -255,7 +256,6 @@ async function attemptScrapeName() {
         if (scrapedName) {
             if (scrapedName !== state.currentFileName) {
                 // Populate the input for user review instead of direct save
-                UI.updateRenamingUI(scrapedName, state.currentFileId);
                 const input = document.getElementById('filename-input');
                 const display = document.getElementById('filename-display');
                 if (input && display) {
@@ -292,38 +292,44 @@ async function getUniqueName(name) {
     return currentName;
 }
 
-async function handleRename(newName) {
-    if (!state.currentFileRecordId) return;
+async function handleRename(newName, targetId = state.currentFileRecordId) {
+    if (!targetId) return;
 
-    findFileByName(newName, (existingFile) => {
-        if (existingFile && existingFile.id !== state.currentFileRecordId) {
-            UI.showConflictResolver(newName, existingFile, state.currentFileName,
-                () => finalizeRenameWithConflictCheck(state.currentFileRecordId, newName),
-                (otherNewName, currentNewName) => {
-                    // Resolve both
-                    renameFileInDB(existingFile.id, otherNewName, () => {
-                        finalizeRenameWithConflictCheck(state.currentFileRecordId, currentNewName);
-                    });
-                }
-            );
+    const existingFile = await findFileByName(newName);
+    if (existingFile && existingFile.id !== targetId) {
+        // Conflict
+        let currentNameOfTarget = "";
+        if (targetId === state.currentFileRecordId) {
+            currentNameOfTarget = state.currentFileName;
         } else {
-            finalizeRenameWithConflictCheck(state.currentFileRecordId, newName);
+            const f = await new Promise(res => getFileById(targetId, res));
+            currentNameOfTarget = f ? f.name : "Unknown";
         }
-    });
+
+        UI.showConflictResolver(newName, existingFile, currentNameOfTarget,
+            async () => {
+                // Rename Anyways
+                const uniqueName = await getUniqueName(newName);
+                finalizeRename(targetId, uniqueName);
+            },
+            async (otherNewName, currentNewName) => {
+                // Resolve Both
+                await handleRename(otherNewName, existingFile.id);
+                await handleRename(currentNewName, targetId);
+            }
+        );
+    } else {
+        finalizeRename(targetId, newName);
+    }
 }
 
-async function finalizeRenameWithConflictCheck(id, newName) {
-    const uniqueName = await getUniqueName(newName);
-    renameFileInDB(id, uniqueName, () => {
-        state.currentFileName = uniqueName;
-        processAndRender();
-        loadHistory();
-    });
-}
-
-function renameFileInDB(id, newName, callback) {
+function finalizeRename(id, newName) {
     updateFileNameInDB(id, newName, () => {
-        if (callback) callback();
+        if (id === state.currentFileRecordId) {
+            state.currentFileName = newName;
+            processAndRender();
+        }
+        loadHistory();
     });
 }
 
