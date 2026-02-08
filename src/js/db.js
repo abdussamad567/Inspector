@@ -51,22 +51,31 @@ export function saveFileToHistory(fileObj, callback) {
 }
 
 export function getUniqueName(name, callback) {
-    if (!db) return callback(name);
-    const store = db.transaction([STORE_NAME], 'readonly').objectStore(STORE_NAME);
-    store.getAll().onsuccess = (e) => {
-        const files = e.target.result;
-        let baseName = name;
-        let counter = 1;
-        let currentName = name;
+    if (!db) return callback ? callback(name) : Promise.resolve(name);
 
-        const exists = (n) => files.some(f => f.name === n);
+    const promise = new Promise((resolve) => {
+        const store = db.transaction([STORE_NAME], 'readonly').objectStore(STORE_NAME);
+        store.getAll().onsuccess = (e) => {
+            const files = e.target.result;
+            let baseName = name;
+            let counter = 1;
+            let currentName = name;
 
-        while (exists(currentName)) {
-            counter++;
-            currentName = `${baseName} (${counter})`;
-        }
-        callback(currentName);
-    };
+            const exists = (n) => files.some(f => f.name === n);
+
+            while (exists(currentName)) {
+                counter++;
+                currentName = `${baseName} (${counter})`;
+            }
+            resolve(currentName);
+        };
+    });
+
+    if (callback) {
+        promise.then(callback);
+    } else {
+        return promise;
+    }
 }
 
 export function fetchHistory(callback) {
@@ -103,28 +112,46 @@ export function togglePinInDB(file, callback) {
 }
 
 export function updateFileNameInDB(id, newName, callback) {
-    if (!db) return;
-    const tx = db.transaction([STORE_NAME], 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-    const getReq = store.get(id);
-    getReq.onsuccess = () => {
-        const data = getReq.result;
-        if (data) {
-            data.name = newName;
-            store.put(data);
-        }
-    };
-    tx.oncomplete = () => {
-        if (callback) callback();
-    };
+    if (!db) return callback ? callback() : Promise.resolve();
+
+    const promise = new Promise((resolve) => {
+        const tx = db.transaction([STORE_NAME], 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const getReq = store.get(id);
+        getReq.onsuccess = () => {
+            const data = getReq.result;
+            if (data) {
+                data.name = newName;
+                store.put(data);
+            }
+        };
+        tx.oncomplete = () => {
+            resolve();
+        };
+    });
+
+    if (callback) {
+        promise.then(callback);
+    } else {
+        return promise;
+    }
 }
 
 export function getFileById(id, callback) {
-    if (!db) return;
-    const req = db.transaction([STORE_NAME], 'readonly').objectStore(STORE_NAME).get(id);
-    req.onsuccess = (e) => {
-        if (callback) callback(e.target.result);
-    };
+    if (!db) return callback ? callback(null) : Promise.resolve(null);
+
+    const promise = new Promise((resolve) => {
+        const req = db.transaction([STORE_NAME], 'readonly').objectStore(STORE_NAME).get(id);
+        req.onsuccess = (e) => {
+            resolve(e.target.result);
+        };
+    });
+
+    if (callback) {
+        promise.then(callback);
+    } else {
+        return promise;
+    }
 }
 
 export function findFileByName(name, callback) {

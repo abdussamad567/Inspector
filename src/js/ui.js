@@ -824,7 +824,7 @@ export function setupRenamingUI(onRename, onScrape) {
     });
 }
 
-export function showConflictResolver(targetName, existingFile, currentFileName, onRenameAnyways, onRenameBoth) {
+export function showConflictResolver(targetName, existingFile, currentFileName, onRenameAnyways, onRenameBoth, onCancel) {
     const container = document.createElement('div');
     container.className = 'conflict-resolver-container';
 
@@ -896,7 +896,7 @@ export function showConflictResolver(targetName, existingFile, currentFileName, 
         headerColor: '#ef4444',
         iconClass: 'ph-fill ph-warning-circle',
         extraContent: container,
-        dismissBtn: { text: 'Cancel' }
+        dismissBtn: { text: 'Cancel', onClick: onCancel }
     });
 }
 

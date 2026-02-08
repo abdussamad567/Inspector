@@ -1,5 +1,5 @@
 import { initPreferences, prefs, setTheme } from './settings.js';
-import { initDB, saveFileToHistory, loadLastFileFromDB, clearRecentsInDB, togglePinInDB, fetchHistory, updateFileNameInDB, findFileByName, getFileById } from './db.js';
+import { initDB, saveFileToHistory, loadLastFileFromDB, clearRecentsInDB, togglePinInDB, fetchHistory, updateFileNameInDB, findFileByName, getFileById, getUniqueName } from './db.js';
 import { fetchDriveFile, parseDriveLink, cancelFetch, fetchProxyBlob } from './drive.js';
 import { parseConversation, generateMetadataHTML, getCleanJSON, extractMedia } from './parser.js';
 import * as UI from './ui.js';
@@ -280,57 +280,56 @@ async function attemptScrapeName() {
     }
 }
 
-async function getUniqueName(name) {
-    let baseName = name;
-    let counter = 1;
-    let currentName = name;
-
-    while (await findFileByName(currentName)) {
-        counter++;
-        currentName = `${baseName} (${counter})`;
-    }
-    return currentName;
-}
-
 async function handleRename(newName, targetId = state.currentFileRecordId) {
-    if (!targetId) return;
+    if (!targetId) return Promise.resolve();
 
     const existingFile = await findFileByName(newName);
     if (existingFile && existingFile.id !== targetId) {
         // Conflict
-        let currentNameOfTarget = "";
-        if (targetId === state.currentFileRecordId) {
-            currentNameOfTarget = state.currentFileName;
-        } else {
-            const f = await new Promise(res => getFileById(targetId, res));
-            currentNameOfTarget = f ? f.name : "Unknown";
-        }
-
-        UI.showConflictResolver(newName, existingFile, currentNameOfTarget,
-            async () => {
-                // Rename Anyways
-                const uniqueName = await getUniqueName(newName);
-                finalizeRename(targetId, uniqueName);
-            },
-            async (otherNewName, currentNewName) => {
-                // Resolve Both
-                await handleRename(otherNewName, existingFile.id);
-                await handleRename(currentNewName, targetId);
+        return new Promise(async (resolve) => {
+            let currentNameOfTarget = "";
+            if (targetId === state.currentFileRecordId) {
+                currentNameOfTarget = state.currentFileName;
+            } else {
+                const f = await getFileById(targetId);
+                currentNameOfTarget = f ? f.name : "Unknown";
             }
-        );
+
+            UI.showConflictResolver(newName, existingFile, currentNameOfTarget,
+                async () => {
+                    // Rename Anyways
+                    const uniqueName = await getUniqueName(newName);
+                    await finalizeRename(targetId, uniqueName);
+                    resolve();
+                },
+                async (otherNewName, currentNewName) => {
+                    // Resolve Both
+                    if (otherNewName === currentNewName) {
+                        // Scenario: both set to same name
+                        await handleRename(otherNewName, existingFile.id);
+                        const uniqueForCurrent = await getUniqueName(currentNewName);
+                        await handleRename(uniqueForCurrent, targetId);
+                    } else {
+                        await handleRename(otherNewName, existingFile.id);
+                        await handleRename(currentNewName, targetId);
+                    }
+                    resolve();
+                },
+                () => resolve() // On Cancel
+            );
+        });
     } else {
-        finalizeRename(targetId, newName);
+        return finalizeRename(targetId, newName);
     }
 }
 
-function finalizeRename(id, newName) {
-    updateFileNameInDB(id, newName, () => {
-        if (id === state.currentFileRecordId) {
-            state.currentFileName = newName;
-            processAndRender();
-        }
-        loadHistory();
-    });
+async function finalizeRename(id, newName) {
+    await updateFileNameInDB(id, newName);
+    if (id === state.currentFileRecordId) {
+        state.currentFileName = newName;
+        processAndRender();
+    }
+    loadHistory();
 }
 
 function performSearch(term) {
