@@ -836,6 +836,66 @@ body.wrap-codeblocks #text-viewer-modal pre {
     display: none !important;
 }
 
+/* Custom Checkbox Design */
+input[type="checkbox"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    background: var(--bg-surface);
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    display: inline-grid;
+    place-content: center;
+    margin: 0;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+input[type="checkbox"]:hover {
+    border-color: var(--accent-primary);
+    background: var(--hover-bg);
+}
+
+input[type="checkbox"]:checked {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
+input[type="checkbox"]:checked::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+    background-color: white;
+    transform: scale(1);
+}
+
+/* Ensure dark mode contrast for checkbox */
+[data-theme="dark"] input[type="checkbox"]:checked::before {
+    background-color: #000;
+}
+
+/* Ensure existing switches still work by overriding general checkbox styles */
+.switch input[type="checkbox"] {
+    width: 0;
+    height: 0;
+    opacity: 0;
+    position: absolute;
+    display: block;
+    border: none;
+    background: none;
+}
+
+/* Specific adjustment for media gallery checkboxes */
+.media-checkbox {
+    margin: 0 !important;
+}
+
 /* Utility Classes */
 .mb-10 { margin-bottom: 10px; }
 .mb-15 { margin-bottom: 15px; }

@@ -1041,7 +1041,7 @@ export function renderHistoryLists(recentFiles, pinnedFiles, handlers, activeId 
         };
 
         const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'history-action-btn';
+        deleteBtn.className = 'history-action-btn delete';
         deleteBtn.title = 'Delete';
         deleteBtn.innerHTML = '<i class="ph ph-trash"></i>';
         deleteBtn.onclick = (e) => {
