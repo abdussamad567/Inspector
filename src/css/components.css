@@ -478,9 +478,12 @@ input:checked + .slider:before {
     font-size: 13px;
     color: var(--text-main);
     line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-#error-body p {
+.error-body p {
     margin: 0;
 }
 

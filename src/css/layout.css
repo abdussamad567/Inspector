@@ -596,6 +596,12 @@ button.search-toggle.active {
 }
 
 /* Conflict UI */
+#conflict-resolver-expandable {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
 .conflict-resolver-container {
     padding: 0;
 }

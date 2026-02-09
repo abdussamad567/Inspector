@@ -829,7 +829,7 @@ export function showConflictResolver(targetName, existingFile, currentFileName, 
     container.className = 'conflict-resolver-container';
 
     container.innerHTML = `
-        <div id="conflict-initial-actions" class="flex-column gap-10 mt-10">
+        <div id="conflict-initial-actions" class="flex-column gap-10">
             <button id="resolve-conflicts-trigger" class="btn btn-primary w-full">Resolve Conflicts</button>
             <button id="rename-anyways-btn" class="btn btn-secondary w-full">Rename Anyways</button>
         </div>
