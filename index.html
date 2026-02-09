@@ -446,25 +446,38 @@
             <button id="scroll-bottom" title="Bottom of View"><i class="ph ph-arrow-line-down"></i></button>
         </div>
 
-        <div id="media-widget" class="hidden">
-            <button id="mediaGalleryBtn" title="Media Gallery"><i class="ph ph-images"></i></button>
-        </div>
-
-        <div id="export-widget" class="hidden">
-            <div id="export-widget-popover" class="sideways-popover hidden">
-                <div class="popover-arrow sideways"></div>
-                <div class="popover-content">
-                    <div class="popover-section-title">Export Conversation</div>
-                    <button class="popover-item" data-format="html"><i class="ph ph-code"></i> HTML</button>
-                    <button class="popover-item" data-format="markdown"><i class="ph ph-markdown-logo"></i> Download MD</button>
-                    <button class="popover-item" data-format="copy-markdown"><i class="ph ph-copy"></i> Copy MD</button>
-                    <button class="popover-item" data-format="pdf"><i class="ph ph-file-pdf"></i> PDF</button>
-                    <button class="popover-item" data-format="txt"><i class="ph ph-file-txt"></i> Download TXT</button>
-                    <button class="popover-item" data-format="copy-txt"><i class="ph ph-copy"></i> Copy TXT</button>
-                    <button class="popover-item" data-format="image"><i class="ph ph-image"></i> Image (PNG)</button>
+        <div class="floating-widgets-group">
+            <div id="export-widget" class="hidden">
+                <div id="export-widget-popover" class="sideways-popover hidden">
+                    <div class="popover-arrow sideways"></div>
+                    <div class="popover-content">
+                        <div class="popover-section-title">Export Full History</div>
+                        <div class="popover-item-group">
+                            <button class="popover-item" data-format="html"><i class="ph ph-code"></i> HTML</button>
+                            <button class="popover-copy-btn" data-format="copy-html" title="Copy HTML"><i class="ph ph-copy"></i></button>
+                        </div>
+                        <div class="popover-item-group">
+                            <button class="popover-item" data-format="markdown"><i class="ph ph-markdown-logo"></i> Markdown</button>
+                            <button class="popover-copy-btn" data-format="copy-markdown" title="Copy Markdown"><i class="ph ph-copy"></i></button>
+                        </div>
+                        <div class="popover-item-group">
+                            <button class="popover-item" data-format="pdf"><i class="ph ph-file-pdf"></i> PDF</button>
+                        </div>
+                        <div class="popover-item-group">
+                            <button class="popover-item" data-format="txt"><i class="ph ph-file-txt"></i> Plain Text</button>
+                            <button class="popover-copy-btn" data-format="copy-txt" title="Copy Text"><i class="ph ph-copy"></i></button>
+                        </div>
+                        <div class="popover-item-group">
+                            <button class="popover-item" data-format="image"><i class="ph ph-image"></i> Image (PNG)</button>
+                        </div>
+                    </div>
                 </div>
+                <button id="exportWidgetBtn" title="Export Conversation"><i class="ph ph-download-simple"></i></button>
             </div>
-            <button id="exportWidgetBtn" title="Export Conversation"><i class="ph ph-download-simple"></i></button>
+
+            <div id="media-widget" class="hidden">
+                <button id="mediaGalleryBtn" title="Media Gallery"><i class="ph ph-images"></i></button>
+            </div>
         </div>
 
     </main>

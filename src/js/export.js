@@ -37,17 +37,28 @@ export function copyToClipboardAsText(chunks) {
  * Exports a set of chunks or an element as HTML
  */
 export function exportToHtml(element, title, filename) {
+    const html = generateStandaloneHtml(element, title);
+    downloadString(html, `${filename}.html`, 'text/html');
+}
+
+/**
+ * Copy element to clipboard as HTML
+ */
+export function copyToClipboardAsHtml(element, title) {
+    const html = generateStandaloneHtml(element, title);
+    navigator.clipboard.writeText(html).then(() => showToast('HTML copied to clipboard'));
+}
+
+function generateStandaloneHtml(element, title) {
     const styles = Array.from(document.styleSheets)
         .map(sheet => {
             try {
                 return Array.from(sheet.cssRules).map(rule => rule.cssText).join('\n');
             } catch (e) {
-                // Skip cross-origin stylesheets if they can't be read
                 return '';
             }
         }).join('\n');
 
-    // Add Highlight.js theme
     const themeLink = document.getElementById('highlight-stylesheet');
     const themeUrl = themeLink ? themeLink.href : '';
 
@@ -56,9 +67,9 @@ export function exportToHtml(element, title, filename) {
         '--bg-app', '--bg-surface', '--bg-sidebar', '--bg-code', '--text-main', '--text-muted', '--text-faint',
         '--accent-primary', '--accent-surface', '--border-subtle', '--border-focus',
         '--radius-sm', '--radius-md', '--radius-lg'
-    ].map(v => `${v}: ${rootStyles.getPropertyValue(v)};`).join('\n');
+    ].map(v => `${v}: ${rootStyles.getPropertyValue(v).trim()};`).join('\n');
 
-    const html = `
+    return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -70,38 +81,48 @@ export function exportToHtml(element, title, filename) {
         :root {
             ${cssVars}
         }
+        * { box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
-            padding: 40px;
+            padding: 40px 20px;
             background: var(--bg-app);
             color: var(--text-main);
             line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 900px;
         }
         ${styles}
-        .message-tooltip, .code-header-actions, .collapse-code-btn, .sticky-sentinel { display: none !important; }
-        .message { max-width: 900px; margin: 0 auto 30px auto !important; }
+        .message-tooltip, .code-header-actions, .collapse-code-btn, .sticky-sentinel, .tooltip-btn, .edit-icon, #scrape-name-btn { display: none !important; }
+        .message { max-width: 100% !important; margin: 0 auto 30px auto !important; }
         .premium-header {
-            max-width: 900px;
-            margin: 0 auto 40px auto;
+            width: 100%;
+            margin-bottom: 40px;
             padding-bottom: 20px;
             border-bottom: 1px solid var(--border-subtle);
         }
         .premium-header h1 { margin: 0; font-size: 24px; }
         .premium-header p { color: var(--text-muted); margin: 5px 0 0 0; font-size: 14px; }
+        pre { max-width: 100%; overflow-x: auto; }
     </style>
 </head>
 <body data-theme="${document.documentElement.getAttribute('data-theme') || 'light'}">
-    <div class="premium-header">
-        <h1>${title}</h1>
-        <p>Exported from Gemini Inspector</p>
-    </div>
-    <div class="content-wrapper">
-        ${element.innerHTML}
+    <div class="container">
+        <div class="premium-header">
+            <h1>${title}</h1>
+            <p>Exported from Gemini Inspector</p>
+        </div>
+        <div class="content-wrapper">
+            ${element.innerHTML}
+        </div>
     </div>
 </body>
 </html>`;
-
-    downloadString(html, `${filename}.html`, 'text/html');
 }
 
 /**
@@ -110,16 +131,25 @@ export function exportToHtml(element, title, filename) {
 export function exportToPdf(targetElements = null) {
     if (targetElements) {
         if (!Array.isArray(targetElements)) targetElements = [targetElements];
+
+        // Clear any existing targets first
+        document.querySelectorAll('.print-target').forEach(el => el.classList.remove('print-target'));
+
         targetElements.forEach(el => el.classList.add('print-target'));
         document.body.classList.add('print-isolated');
 
         window.print();
 
-        // Use a small delay for restoration to ensure print dialog is finished
-        setTimeout(() => {
+        const cleanup = () => {
             document.body.classList.remove('print-isolated');
             targetElements.forEach(el => el.classList.remove('print-target'));
-        }, 500);
+            window.removeEventListener('afterprint', cleanup);
+        };
+
+        window.addEventListener('afterprint', cleanup);
+
+        // Fallback cleanup
+        setTimeout(cleanup, 2000);
     } else {
         window.print();
     }
@@ -190,9 +220,18 @@ export async function exportToImage(element, filename) {
         captureContainer.appendChild(card);
         document.body.appendChild(captureContainer);
 
+        // Ensure fonts are loaded
+        await document.fonts.ready;
+
         const dataUrl = await htmlToImage.toPng(captureContainer, {
             width: 1000,
             pixelRatio: 2,
+            backgroundColor: 'transparent',
+            style: {
+                transform: 'none',
+                opacity: '1',
+                visibility: 'visible'
+            }
         });
 
         document.body.removeChild(captureContainer);

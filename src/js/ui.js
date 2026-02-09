@@ -1,6 +1,6 @@
 /* global marked, DOMPurify, hljs */
 import { prefs, CODE_THEMES } from './settings.js';
-import { truncate, showToast } from './utils.js';
+import { truncate, showToast, updateUrl } from './utils.js';
 import { fetchProxyContent, fetchProxyBlob } from './drive.js';
 
 const driveAccessRegistry = JSON.parse(localStorage.getItem('driveAccessRegistry') || '{}');
@@ -343,7 +343,7 @@ function initCodeThemeUI() {
         const themeObj = CODE_THEMES.find(t => t.value === themeValue);
         if (themeObj) currentNameEl.textContent = themeObj.name;
 
-        mainStylesheet.href = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/${themeValue}.min.css`;
+        mainStylesheet.href = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/${themeValue}.min.css`;
         localStorage.setItem('codeTheme', themeValue);
 
         Array.from(options.children).forEach(child => {

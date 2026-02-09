@@ -499,7 +499,7 @@ async function handleExportTurn(index) {
                 <span class="opt-label">Markdown</span>
                 <div class="btn-group-row">
                     <button class="btn btn-secondary" data-format="copy-markdown"><i class="ph ph-copy"></i> Copy</button>
-                    <button class="btn btn-secondary" data-format="markdown"><i class="ph ph-download-simple"></i> DL</button>
+                    <button class="btn btn-secondary" data-format="markdown"><i class="ph ph-download-simple"></i> Download</button>
                 </div>
             </div>
 
@@ -507,13 +507,13 @@ async function handleExportTurn(index) {
                 <span class="opt-label">Plain Text</span>
                 <div class="btn-group-row">
                     <button class="btn btn-secondary" data-format="copy-txt"><i class="ph ph-copy"></i> Copy</button>
-                    <button class="btn btn-secondary" data-format="txt"><i class="ph ph-download-simple"></i> DL</button>
+                    <button class="btn btn-secondary" data-format="txt"><i class="ph ph-download-simple"></i> Download</button>
                 </div>
             </div>
         </div>
     `;
 
-    const { exportToMarkdown, exportToTxt, exportToHtml, exportToPdf, exportToImage, copyToClipboardAsMarkdown, copyToClipboardAsText } = await import('./export.js');
+    const { exportToMarkdown, exportToTxt, exportToHtml, exportToPdf, exportToImage, copyToClipboardAsMarkdown, copyToClipboardAsText, copyToClipboardAsHtml } = await import('./export.js');
 
     container.querySelectorAll('button').forEach(btn => {
         btn.onclick = async () => {
@@ -544,14 +544,17 @@ async function handleExportTurn(index) {
                         }, 1000);
                     }, 100);
                 }
-            } else if (format === 'html') {
+            } else if (format === 'html' || format === 'copy-html') {
                 const chatStream = document.getElementById('chat-stream');
+                const isCopy = format === 'copy-html';
+                const action = isCopy ? () => copyToClipboardAsHtml(chatStream, `Turn ${index + 1} Export`) : () => exportToHtml(chatStream, `Turn ${index + 1} Export`, filename);
+
                 if (!prefs.isScrollMode && state.focusIndex === index) {
-                    exportToHtml(chatStream, `Turn ${index + 1} Export`, filename);
+                    action();
                 } else {
                     const oldHtml = chatStream.innerHTML;
                     UI.renderConversation(state.parsedData, index, state.currentPrompts);
-                    exportToHtml(chatStream, `Turn ${index + 1} Export`, filename);
+                    action();
                     chatStream.innerHTML = oldHtml;
                 }
             } else if (format === 'image') {
@@ -756,8 +759,9 @@ function setupEventListeners() {
         });
     }
 
-    exportWidgetPopover.querySelectorAll('.popover-item').forEach(item => {
-        item.addEventListener('click', () => {
+    exportWidgetPopover.querySelectorAll('[data-format]').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
             const format = item.dataset.format;
             exportWidgetPopover.classList.add('hidden');
             handleFullExport(format);
@@ -772,7 +776,7 @@ function setupEventListeners() {
 
     async function handleFullExport(format) {
         if (!state.parsedData) return;
-        const { exportToMarkdown, exportToTxt, exportToHtml, exportToPdf, exportToImage, copyToClipboardAsMarkdown, copyToClipboardAsText } = await import('./export.js');
+        const { exportToMarkdown, exportToTxt, exportToHtml, exportToPdf, exportToImage, copyToClipboardAsMarkdown, copyToClipboardAsText, copyToClipboardAsHtml } = await import('./export.js');
         const filename = state.currentFileName;
         const allChunks = state.parsedData.chunkedPrompt.chunks;
 
@@ -805,15 +809,18 @@ function setupEventListeners() {
                     dismissBtn: { text: 'Cancel' }
                 });
             }
-        } else if (format === 'html') {
+        } else if (format === 'html' || format === 'copy-html') {
             const chatStream = document.getElementById('chat-stream');
+            const isCopy = format === 'copy-html';
+            const action = isCopy ? () => copyToClipboardAsHtml(chatStream, state.currentFileName) : () => exportToHtml(chatStream, state.currentFileName, filename);
+
             if (prefs.isScrollMode) {
-                exportToHtml(chatStream, state.currentFileName, filename);
+                action();
             } else {
                  const oldHtml = chatStream.innerHTML;
                  const oldView = chatStream.getAttribute('data-view');
                  UI.renderFullConversation(state.parsedData, state.currentPrompts);
-                 exportToHtml(chatStream, state.currentFileName, filename);
+                 action();
                  if (oldView === 'full') UI.renderFullConversation(state.parsedData, state.currentPrompts);
                  else UI.renderConversation(state.parsedData, state.focusIndex, state.currentPrompts);
             }
