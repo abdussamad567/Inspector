@@ -215,7 +215,7 @@ async function processAndRender(startIndex = null) {
     // Show main UI elements
     document.getElementById('downloadGroup').classList.remove('hidden');
     document.getElementById('exportGroup').classList.remove('hidden');
-    document.getElementById('fullExportGroup').classList.remove('hidden');
+    document.getElementById('export-widget').classList.remove('hidden');
     document.getElementById('nav-widget').classList.remove('hidden');
 
     // Render specified turn or default to 0
@@ -342,7 +342,7 @@ function resetAppState() {
     document.getElementById('metadata-panel').classList.add('hidden');
     document.getElementById('downloadGroup').classList.add('hidden');
     document.getElementById('exportGroup').classList.add('hidden');
-    document.getElementById('fullExportGroup').classList.add('hidden');
+    document.getElementById('export-widget').classList.add('hidden');
     document.getElementById('nav-widget').classList.add('hidden');
     UI.showMediaButton(false);
 }
@@ -490,16 +490,30 @@ async function handleExportTurn(index) {
     const container = document.createElement('div');
     container.className = 'export-options-container';
     container.innerHTML = `
-        <div class="flex-column gap-10">
-            <button class="btn btn-secondary w-full" data-format="html"><i class="ph ph-code"></i> HTML</button>
-            <button class="btn btn-secondary w-full" data-format="markdown"><i class="ph ph-markdown-logo"></i> Markdown</button>
-            <button class="btn btn-secondary w-full" data-format="pdf"><i class="ph ph-file-pdf"></i> PDF</button>
-            <button class="btn btn-secondary w-full" data-format="txt"><i class="ph ph-file-txt"></i> TXT</button>
-            <button class="btn btn-secondary w-full" data-format="image"><i class="ph ph-image"></i> Image</button>
+        <div class="export-grid-options">
+            <button class="btn btn-secondary" data-format="html"><i class="ph ph-code"></i> HTML</button>
+            <button class="btn btn-secondary" data-format="pdf"><i class="ph ph-file-pdf"></i> PDF</button>
+            <button class="btn btn-secondary" data-format="image"><i class="ph ph-image"></i> Image</button>
+
+            <div class="export-opt-group">
+                <span class="opt-label">Markdown</span>
+                <div class="btn-group-row">
+                    <button class="btn btn-secondary" data-format="copy-markdown"><i class="ph ph-copy"></i> Copy</button>
+                    <button class="btn btn-secondary" data-format="markdown"><i class="ph ph-download-simple"></i> DL</button>
+                </div>
+            </div>
+
+            <div class="export-opt-group">
+                <span class="opt-label">Plain Text</span>
+                <div class="btn-group-row">
+                    <button class="btn btn-secondary" data-format="copy-txt"><i class="ph ph-copy"></i> Copy</button>
+                    <button class="btn btn-secondary" data-format="txt"><i class="ph ph-download-simple"></i> DL</button>
+                </div>
+            </div>
         </div>
     `;
 
-    const { exportToMarkdown, exportToTxt, exportToHtml, exportToPdf, exportToImage } = await import('./export.js');
+    const { exportToMarkdown, exportToTxt, exportToHtml, exportToPdf, exportToImage, copyToClipboardAsMarkdown, copyToClipboardAsText } = await import('./export.js');
 
     container.querySelectorAll('button').forEach(btn => {
         btn.onclick = async () => {
@@ -508,18 +522,26 @@ async function handleExportTurn(index) {
 
             if (format === 'markdown') {
                 exportToMarkdown(turnChunks, filename);
+            } else if (format === 'copy-markdown') {
+                copyToClipboardAsMarkdown(turnChunks);
             } else if (format === 'txt') {
                 exportToTxt(turnChunks, filename);
+            } else if (format === 'copy-txt') {
+                copyToClipboardAsText(turnChunks);
             } else if (format === 'pdf') {
+                const chatStream = document.getElementById('chat-stream');
                 if (!prefs.isScrollMode && state.focusIndex === index) {
-                    exportToPdf();
+                    exportToPdf(Array.from(chatStream.children));
                 } else {
-                    const chatStream = document.getElementById('chat-stream');
                     const oldHtml = chatStream.innerHTML;
+                    const oldView = chatStream.getAttribute('data-view');
                     UI.renderConversation(state.parsedData, index, state.currentPrompts);
                     setTimeout(() => {
-                        exportToPdf();
-                        // State restoration is best-effort
+                        exportToPdf(Array.from(chatStream.children));
+                        setTimeout(() => {
+                            if (oldView === 'full') UI.renderFullConversation(state.parsedData, state.currentPrompts);
+                            else UI.renderConversation(state.parsedData, state.focusIndex, state.currentPrompts);
+                        }, 1000);
                     }, 100);
                 }
             } else if (format === 'html') {
@@ -549,7 +571,7 @@ async function handleExportTurn(index) {
     UI.showModal({
         title: 'Export Turn',
         message: 'Choose a format to export this turn:',
-        headerColor: 'var(--accent-primary)',
+        headerColor: 'var(--accent-surface)',
         iconClass: 'ph ph-download-simple',
         extraContent: container,
         dismissBtn: { text: 'Cancel' }
@@ -723,44 +745,45 @@ function setupEventListeners() {
 
     document.getElementById('searchPrompts').addEventListener('input', (e) => performSearch(e.target.value));
 
-    // Full Export Logic
-    const fullExportBtn = document.getElementById('fullExportBtn');
-    const fullExportTrigger = document.getElementById('fullExportTrigger');
-    const exportPopover = document.getElementById('export-popover');
+    // Full Export Logic (Widget)
+    const exportWidgetBtn = document.getElementById('exportWidgetBtn');
+    const exportWidgetPopover = document.getElementById('export-widget-popover');
 
-    fullExportBtn.addEventListener('click', () => {
-        handleFullExport('html');
-    });
+    if (exportWidgetBtn) {
+        exportWidgetBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            exportWidgetPopover.classList.toggle('hidden');
+        });
+    }
 
-    fullExportTrigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        exportPopover.classList.toggle('hidden');
-    });
-
-    exportPopover.querySelectorAll('.popover-item').forEach(item => {
+    exportWidgetPopover.querySelectorAll('.popover-item').forEach(item => {
         item.addEventListener('click', () => {
             const format = item.dataset.format;
-            exportPopover.classList.add('hidden');
+            exportWidgetPopover.classList.add('hidden');
             handleFullExport(format);
         });
     });
 
     document.addEventListener('click', (e) => {
-        if (!exportPopover.contains(e.target) && e.target !== fullExportTrigger) {
-            exportPopover.classList.add('hidden');
+        if (!exportWidgetPopover.contains(e.target) && e.target !== exportWidgetBtn) {
+            exportWidgetPopover.classList.add('hidden');
         }
     });
 
     async function handleFullExport(format) {
         if (!state.parsedData) return;
-        const { exportToMarkdown, exportToTxt, exportToHtml, exportToPdf, exportToImage } = await import('./export.js');
+        const { exportToMarkdown, exportToTxt, exportToHtml, exportToPdf, exportToImage, copyToClipboardAsMarkdown, copyToClipboardAsText } = await import('./export.js');
         const filename = state.currentFileName;
         const allChunks = state.parsedData.chunkedPrompt.chunks;
 
         if (format === 'markdown') {
             exportToMarkdown(allChunks, filename);
+        } else if (format === 'copy-markdown') {
+            copyToClipboardAsMarkdown(allChunks);
         } else if (format === 'txt') {
             exportToTxt(allChunks, filename);
+        } else if (format === 'copy-txt') {
+            copyToClipboardAsText(allChunks);
         } else if (format === 'pdf') {
             if (prefs.isScrollMode) {
                 exportToPdf();
@@ -768,7 +791,7 @@ function setupEventListeners() {
                 UI.showModal({
                     title: 'Export PDF',
                     message: 'PDF export works best in Timeline (Scroll) mode. Switch and export?',
-                    headerColor: 'var(--accent-primary)',
+                    headerColor: 'var(--accent-surface)',
                     iconClass: 'ph ph-file-pdf',
                     primaryBtn: {
                         text: 'Switch & Export',
@@ -836,11 +859,20 @@ function setupEventListeners() {
             UI.populateSidebar(state.currentPrompts, {
                 onPromptClick: (index) => handlePromptClick(index),
                 onRenamePrompt: (index, newName) => handlePromptRename(index, newName),
-                onRevertPrompt: (index) => handlePromptRevert(index)
+                onRevertPrompt: (index) => handlePromptRevert(index),
+                onExportTurn: (index) => handleExportTurn(index)
             }, record);
 
-            if (prefs.isScrollMode) renderCompleteDialog();
-            else renderChat(state.focusIndex);
+            if (prefs.isScrollMode) {
+                renderCompleteDialog();
+                updateUrl(state.currentFileId, state.currentFileRecordId, null, state.focusIndex);
+                setTimeout(() => {
+                    const target = document.getElementById(`msg-user-${state.focusIndex}`);
+                    if (target) target.scrollIntoView({ behavior: 'auto', block: 'start' });
+                }, 100);
+            } else {
+                renderChat(state.focusIndex);
+            }
             UI.hideLoading();
         }, 50);
     });

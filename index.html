@@ -356,25 +356,6 @@
             </div>
 
             <div class="toolbar-actions">
-                <div class="btn-group hidden" id="fullExportGroup">
-                    <button id="fullExportBtn" class="btn btn-secondary btn-left" title="Export Conversation">
-                        <i class="ph ph-download-simple"></i>
-                        <span class="desktop-only">Export</span>
-                    </button>
-                    <button id="fullExportTrigger" class="btn btn-secondary btn-right">
-                        <i class="ph ph-caret-down"></i>
-                    </button>
-                    <div id="export-popover" class="popover hidden">
-                        <div class="popover-arrow"></div>
-                        <div class="popover-content">
-                            <button class="popover-item" data-format="html"><i class="ph ph-code"></i> HTML</button>
-                            <button class="popover-item" data-format="markdown"><i class="ph ph-markdown-logo"></i> Markdown</button>
-                            <button class="popover-item" data-format="pdf"><i class="ph ph-file-pdf"></i> PDF</button>
-                            <button class="popover-item" data-format="txt"><i class="ph ph-file-txt"></i> TXT</button>
-                            <button class="popover-item" data-format="image"><i class="ph ph-image"></i> Image</button>
-                        </div>
-                    </div>
-                </div>
 
                 <div class="btn-group hidden" id="exportGroup">
                     <button id="exportBtn" class="btn btn-secondary btn-left" title="Download Clean JSON">
@@ -469,6 +450,23 @@
             <button id="mediaGalleryBtn" title="Media Gallery"><i class="ph ph-images"></i></button>
         </div>
 
+        <div id="export-widget" class="hidden">
+            <div id="export-widget-popover" class="sideways-popover hidden">
+                <div class="popover-arrow sideways"></div>
+                <div class="popover-content">
+                    <div class="popover-section-title">Export Conversation</div>
+                    <button class="popover-item" data-format="html"><i class="ph ph-code"></i> HTML</button>
+                    <button class="popover-item" data-format="markdown"><i class="ph ph-markdown-logo"></i> Download MD</button>
+                    <button class="popover-item" data-format="copy-markdown"><i class="ph ph-copy"></i> Copy MD</button>
+                    <button class="popover-item" data-format="pdf"><i class="ph ph-file-pdf"></i> PDF</button>
+                    <button class="popover-item" data-format="txt"><i class="ph ph-file-txt"></i> Download TXT</button>
+                    <button class="popover-item" data-format="copy-txt"><i class="ph ph-copy"></i> Copy TXT</button>
+                    <button class="popover-item" data-format="image"><i class="ph ph-image"></i> Image (PNG)</button>
+                </div>
+            </div>
+            <button id="exportWidgetBtn" title="Export Conversation"><i class="ph ph-download-simple"></i></button>
+        </div>
+
     </main>
 
     <div id="toast" class="toast">
@@ -478,18 +476,19 @@
 
     <template id="message-tooltip-template">
         <div class="message-tooltip">
-            <button class="tooltip-btn" data-action="copy-md" title="Copy as Markdown"><i
-                    class="ph ph-markdown-logo"></i></button>
-            <button class="tooltip-btn" data-action="copy-text" title="Copy as Plain Text"><i
-                    class="ph ph-text-t"></i></button>
-            <button class="tooltip-btn" data-action="export-html" title="Export as HTML"><i
-                    class="ph ph-code"></i></button>
-            <button class="tooltip-btn" data-action="export-txt" title="Export as TXT"><i
-                    class="ph ph-file-txt"></i></button>
-            <button class="tooltip-btn" data-action="export-pdf" title="Export as PDF"><i
-                    class="ph ph-file-pdf"></i></button>
-            <button class="tooltip-btn" data-action="export-image" title="Export as Image"><i
-                    class="ph ph-image"></i></button>
+            <div class="tooltip-section">
+                <button class="tooltip-btn" data-action="copy-md" title="Copy Markdown"><i class="ph ph-copy"></i><span>MD</span></button>
+                <button class="tooltip-btn" data-action="export-md" title="Download Markdown"><i class="ph ph-markdown-logo"></i><span>MD</span></button>
+            </div>
+            <div class="tooltip-section">
+                <button class="tooltip-btn" data-action="copy-text" title="Copy Text"><i class="ph ph-copy"></i><span>TXT</span></button>
+                <button class="tooltip-btn" data-action="export-txt" title="Download Text"><i class="ph ph-file-txt"></i><span>TXT</span></button>
+            </div>
+            <div class="tooltip-section">
+                <button class="tooltip-btn" data-action="export-html" title="Export HTML"><i class="ph ph-code"></i></button>
+                <button class="tooltip-btn" data-action="export-pdf" title="Export PDF"><i class="ph ph-file-pdf"></i></button>
+                <button class="tooltip-btn" data-action="export-image" title="Export Image"><i class="ph ph-image"></i></button>
+            </div>
             <button class="tooltip-btn hidden" data-action="download-media" title="Download Media (.zip)"><i
                     class="ph ph-download-simple"></i></button>
         </div>

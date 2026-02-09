@@ -641,7 +641,7 @@ export function showModal(config) {
 
     // Set Header
     title.textContent = config.title || 'Notification';
-    header.style.backgroundColor = config.headerColor || '#ef4444';
+    header.style.backgroundColor = config.headerColor || 'var(--accent-surface)';
     if (config.iconClass) icon.className = config.iconClass;
     else icon.className = 'ph-fill ph-warning-circle';
 
@@ -1453,12 +1453,14 @@ export function renderFullConversation(parsedData, promptsList) {
         if(visible.length > 0) {
             visible.sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
             const id = visible[0].target.id;
-            const idx = id.split('-').pop();
+            const idx = parseInt(id.split('-').pop());
             setActiveSidebarItem(idx);
+
+            if (_appState) _appState.focusIndex = idx;
 
             // Update URL with scrollTo if in scroll mode
             if (prefs.isScrollMode && _appState) {
-                updateUrl(_appState.currentFileId, _appState.currentFileRecordId, null, idx);
+                updateUrl(_appState.currentFileId, _appState.currentFileRecordId, null, idx, true);
             }
         }
     }, { root: els.scrollContainer, threshold: 0.1 });
@@ -1504,6 +1506,7 @@ function createMessageElement(chunks, role, id = null) {
     if(tooltipTemplate) {
         const tooltip = tooltipTemplate.content.cloneNode(true);
         const copyMd = tooltip.querySelector('[data-action="copy-md"]');
+        const exportMd = tooltip.querySelector('[data-action="export-md"]');
         const copyText = tooltip.querySelector('[data-action="copy-text"]');
         const expHtml = tooltip.querySelector('[data-action="export-html"]');
         const expTxt = tooltip.querySelector('[data-action="export-txt"]');
@@ -1516,18 +1519,22 @@ function createMessageElement(chunks, role, id = null) {
         const mainTextContent = chunks.map(c => c.text).filter(Boolean).join('\n\n');
 
         if (mainTextContent) {
-            copyMd.onclick = () => {
-                navigator.clipboard.writeText(mainTextContent).then(() => showToast("Copied Markdown"));
+            copyMd.onclick = async () => {
+                const { copyToClipboardAsMarkdown } = await import('./export.js');
+                copyToClipboardAsMarkdown(chunks);
             };
-            copyText.onclick = () => {
-                // Remove Markdown formatting for plain text copy
-                const strippedText = mainTextContent.replace(/([_*~`])/g, '');
-                navigator.clipboard.writeText(strippedText).then(() => showToast("Copied Plain Text"));
+            exportMd.onclick = async () => {
+                const { exportToMarkdown } = await import('./export.js');
+                exportToMarkdown(chunks, `Message_${filename}`);
+            };
+            copyText.onclick = async () => {
+                const { copyToClipboardAsText } = await import('./export.js');
+                copyToClipboardAsText(chunks);
             };
         } else {
             // Hide text buttons if no text
-            copyMd.classList.add('hidden');
-            copyText.classList.add('hidden');
+            copyMd.parentElement.classList.add('hidden');
+            copyText.parentElement.classList.add('hidden');
         }
 
         const filename = els.filenameDisplay.title || "export";
@@ -1544,7 +1551,7 @@ function createMessageElement(chunks, role, id = null) {
 
         expPdf.onclick = async () => {
             const { exportToPdf } = await import('./export.js');
-            exportToPdf();
+            exportToPdf(wrapper);
         };
 
         expImg.onclick = async () => {

@@ -26,7 +26,7 @@ export function showToast(message, iconClass = 'ph-fill ph-check-circle') {
     }
 }
 
-export function updateUrl(id, localId = null, turn = null, scrollTo = null) {
+export function updateUrl(id, localId = null, turn = null, scrollTo = null, replace = false) {
     try {
         const newUrl = new URL(window.location);
         // Clear all possible ID and positioning params to start fresh
@@ -50,7 +50,11 @@ export function updateUrl(id, localId = null, turn = null, scrollTo = null) {
             newUrl.searchParams.set('scrollTo', scrollTo);
         }
 
-        window.history.pushState({}, '', newUrl);
+        if (replace) {
+            window.history.replaceState({}, '', newUrl);
+        } else {
+            window.history.pushState({}, '', newUrl);
+        }
     } catch (e) {
         console.error("Failed to update URL", e);
     }

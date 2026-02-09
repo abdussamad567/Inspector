@@ -186,13 +186,54 @@
     right: 8px;
     background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     display: flex;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s;
     z-index: 10;
+    padding: 4px;
+}
+
+.tooltip-section {
+    display: flex;
+    gap: 2px;
+    padding-right: 4px;
+    margin-right: 4px;
+    border-right: 1px solid var(--border-subtle);
+}
+
+.tooltip-section:last-child {
+    border-right: none;
+    margin-right: 0;
+    padding-right: 0;
+}
+
+.tooltip-btn {
+    background: none;
+    border: none;
+    color: var(--text-main);
+    padding: 6px 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    gap: 4px;
+}
+
+.tooltip-btn:hover {
+    color: var(--accent-primary);
+    background: var(--hover-bg);
+}
+
+.tooltip-btn span {
+    font-size: 9px;
+    font-weight: 700;
+    opacity: 1;
 }
 
 .thought-message.collapsed .message-tooltip {
@@ -497,5 +538,37 @@ pre code {
     }
     .thought-message.collapsed {
         display: block !important; /* Show expanded in print */
+    }
+
+    /* Isolation logic for printing specific messages/turns */
+    body.print-isolated #sidebar,
+    body.print-isolated .toolbar,
+    body.print-isolated #nav-widget,
+    body.print-isolated #media-widget,
+    body.print-isolated .toast {
+        display: none !important;
+    }
+
+    body.print-isolated #scroll-container {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    body.print-isolated .content-wrapper > *:not(#chat-stream) {
+        display: none !important;
+    }
+
+    body.print-isolated #chat-stream {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    body.print-isolated #chat-stream > *:not(.print-target) {
+        display: none !important;
+    }
+
+    body.print-isolated .print-target {
+        display: block !important;
+        border: none !important;
     }
 }
