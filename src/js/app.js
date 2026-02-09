@@ -871,12 +871,22 @@ function setupEventListeners() {
             }, record);
 
             if (prefs.isScrollMode) {
+                const targetIdx = state.focusIndex;
                 renderCompleteDialog();
-                updateUrl(state.currentFileId, state.currentFileRecordId, null, state.focusIndex);
-                setTimeout(() => {
-                    const target = document.getElementById(`msg-user-${state.focusIndex}`);
-                    if (target) target.scrollIntoView({ behavior: 'auto', block: 'start' });
-                }, 100);
+                updateUrl(state.currentFileId, state.currentFileRecordId, null, targetIdx);
+
+                // Use multiple attempts to ensure scroll happens after layout
+                const performScroll = () => {
+                    const target = document.getElementById(`msg-user-${targetIdx}`);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'auto', block: 'start' });
+                        // Re-confirm URL hasn't been reset by observer
+                        updateUrl(state.currentFileId, state.currentFileRecordId, null, targetIdx, true);
+                    }
+                };
+
+                setTimeout(performScroll, 50);
+                setTimeout(performScroll, 200);
             } else {
                 renderChat(state.focusIndex);
             }

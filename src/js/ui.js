@@ -1448,7 +1448,11 @@ export function renderFullConversation(parsedData, promptsList) {
 
     postProcessCodeBlocks();
     
+    let observerIgnore = true;
+    setTimeout(() => { observerIgnore = false; }, 500);
+
     const observer = new IntersectionObserver((entries) => {
+        if (observerIgnore) return;
         let visible = entries.filter(e => e.isIntersecting);
         if(visible.length > 0) {
             visible.sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);

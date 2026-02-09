@@ -489,71 +489,100 @@ pre code {
 
 /* Print Styles for PDF Export */
 @media print {
+    @page {
+        margin: 2cm;
+    }
+
     body {
         background: white !important;
-        color: black !important;
+        color: #1a1a1a !important;
+        font-family: 'Inter', -apple-system, sans-serif !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
-    #sidebar, .toolbar, #nav-widget, #media-widget, .toast, #sidebar-overlay, .message-tooltip, .code-header-actions, .collapse-code-btn {
+
+    #sidebar, .toolbar, #nav-widget, #media-widget, .toast, #sidebar-overlay, .message-tooltip, .code-header-actions, .collapse-code-btn, .sticky-sentinel, .edit-icon, #scrape-name-btn {
         display: none !important;
     }
+
     #workspace {
         margin: 0 !important;
         padding: 0 !important;
         width: 100% !important;
     }
+
     #scroll-container {
         overflow: visible !important;
         height: auto !important;
+        padding: 0 !important;
     }
+
     .content-wrapper {
         width: 100% !important;
         max-width: none !important;
     }
+
     .message {
         page-break-inside: avoid;
+        margin-bottom: 30px !important;
         border-bottom: 1px solid #eee;
-        padding: 20px 0;
+        padding-bottom: 20px !important;
     }
+
+    .message-header {
+        color: #666 !important;
+        font-weight: bold !important;
+        font-size: 14px !important;
+        margin-bottom: 12px !important;
+    }
+
     .message-bubble {
         box-shadow: none !important;
-        border: none !important;
-        background: transparent !important;
-        color: black !important;
+        border: 1px solid #eee !important;
+        background: #fff !important;
+        color: #1a1a1a !important;
+        padding: 12px 16px !important;
+        border-radius: 8px !important;
     }
+
+    .role-user .message-bubble {
+        background: #f8fafc !important;
+    }
+
     pre {
         white-space: pre-wrap !important;
         word-wrap: break-word !important;
-        background: #f5f5f5 !important;
-        border: 1px solid #ddd !important;
+        background: #f1f5f9 !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 6px !important;
+        padding: 12px !important;
     }
+
     code {
-        color: black !important;
+        color: #0f172a !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 12px !important;
     }
+
     .token-count {
         display: none !important;
     }
+
     .thought-message {
-        background: #f9f9f9 !important;
-        border: 1px solid #eee !important;
+        background: #fdf2f8 !important; /* Rose tint for thinking */
+        border: 1px dashed #f472b6 !important;
     }
+
     .thought-message.collapsed {
         display: block !important; /* Show expanded in print */
     }
 
+    .thought-message .message-bubble {
+        background: transparent !important;
+        border: none !important;
+    }
+
     /* Isolation logic for printing specific messages/turns */
-    body.print-isolated #sidebar,
-    body.print-isolated .toolbar,
-    body.print-isolated #nav-widget,
-    body.print-isolated #media-widget,
-    body.print-isolated .toast {
-        display: none !important;
-    }
-
-    body.print-isolated #scroll-container {
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-
     body.print-isolated .content-wrapper > *:not(#chat-stream) {
         display: none !important;
     }
