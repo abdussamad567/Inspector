@@ -17,10 +17,10 @@ export const CODE_THEMES = [
     { name: "Monokai", value: "monokai" },
     { name: "GitHub Dark", value: "github-dark" },
     { name: "GitHub", value: "github" },
-    { name: "Dracula", value: "dracula" },
+    { name: "Dracula", value: "base16/dracula" },
     { name: "Nord", value: "nord" },
-    { name: "Solarized Dark", value: "solarized-dark" },
-    { name: "Solarized Light", value: "solarized-light" },
+    { name: "Solarized Dark", value: "base16/solarized-dark" },
+    { name: "Solarized Light", value: "base16/solarized-light" },
     { name: "VS 2015", value: "vs2015" },
     { name: "Agate", value: "agate" },
     { name: "Obsidian", value: "obsidian" },
@@ -79,5 +79,5 @@ export function applyGlobalStyles() {
     document.documentElement.style.setProperty('--content-width', `${prefs.contentWidth}px`);
     
     const link = document.getElementById('highlight-stylesheet');
-    if(link) link.href = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/${prefs.codeTheme}.min.css`;
+    if(link) link.href = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/${prefs.codeTheme}.min.css`;
 }

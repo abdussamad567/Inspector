@@ -869,25 +869,28 @@ button.search-toggle.active {
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
+.panel a {
+    color: var(--accent-primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.panel a:hover {
+    color: var(--text-main);
+}
+
 .panel.hidden {
     display: none;
 }
 
-#nav-widget, #media-widget {
+#nav-widget {
     position: fixed;
     right: 30px;
     display: flex;
     flex-direction: column;
     gap: 8px;
     z-index: 50;
-}
-
-#nav-widget {
     bottom: 30px;
-}
-
-#media-widget {
-    top: 80px; /* Below toolbar */
 }
 
 #nav-widget button, #media-widget button {
@@ -1054,10 +1057,6 @@ button.search-toggle.active {
 
     #nav-widget {
         bottom: 20px;
-        right: 20px;
-    }
-
-    #media-widget {
         right: 20px;
     }
 

@@ -34,7 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
     UI.setNavigationContext(state, {
         onPromptClick: renderChat,
         onRename: handleRename,
-        onScrapeName: attemptScrapeName
+        onScrapeName: attemptScrapeName,
+        onExportTurn: (index) => handleExportTurn(index)
     });
 });
 
@@ -207,12 +208,14 @@ async function processAndRender(startIndex = null) {
     UI.populateSidebar(state.currentPrompts, {
         onPromptClick: (index) => handlePromptClick(index),
         onRenamePrompt: (index, newName) => handlePromptRename(index, newName),
-        onRevertPrompt: (index) => handlePromptRevert(index)
+        onRevertPrompt: (index) => handlePromptRevert(index),
+        onExportTurn: (index) => handleExportTurn(index)
     }, record);
     
     // Show main UI elements
     document.getElementById('downloadGroup').classList.remove('hidden');
     document.getElementById('exportGroup').classList.remove('hidden');
+    document.getElementById('export-widget').classList.remove('hidden');
     document.getElementById('nav-widget').classList.remove('hidden');
 
     // Render specified turn or default to 0
@@ -339,6 +342,7 @@ function resetAppState() {
     document.getElementById('metadata-panel').classList.add('hidden');
     document.getElementById('downloadGroup').classList.add('hidden');
     document.getElementById('exportGroup').classList.add('hidden');
+    document.getElementById('export-widget').classList.add('hidden');
     document.getElementById('nav-widget').classList.add('hidden');
     UI.showMediaButton(false);
 }
@@ -456,6 +460,108 @@ async function handlePromptRevert(index) {
     await import('./db.js').then(db => db.revertPromptNameInDB(state.currentFileRecordId, index));
     processAndRender();
     showToast("Name reverted");
+}
+
+function getChunksForTurn(index) {
+    if (!state.parsedData || !state.currentPrompts[index]) return [];
+    const userPrompt = state.currentPrompts[index];
+    const allChunks = state.parsedData.chunkedPrompt.chunks;
+    let turnChunks = [];
+    let i = userPrompt.originalIndex;
+
+    while (i < allChunks.length && allChunks[i].role === 'user') {
+        turnChunks.push(allChunks[i]);
+        i++;
+    }
+
+    for (; i < allChunks.length; i++) {
+        const chunk = allChunks[i];
+        if (chunk.role === 'model') {
+            turnChunks.push(chunk);
+        } else if (chunk.role === 'user') break;
+    }
+    return turnChunks;
+}
+
+async function handleExportTurn(index) {
+    const turnChunks = getChunksForTurn(index);
+    const filename = `${state.currentFileName}_Turn_${index + 1}`;
+
+    const container = document.createElement('div');
+    container.className = 'export-options-container';
+    container.innerHTML = `
+        <div class="export-grid-options">
+            <button class="btn btn-secondary" data-format="html"><i class="ph ph-code"></i> HTML</button>
+            <button class="btn btn-secondary" data-format="image"><i class="ph ph-image"></i> Image</button>
+
+            <div class="export-opt-group">
+                <span class="opt-label">Markdown</span>
+                <div class="btn-group-row">
+                    <button class="btn btn-secondary" data-format="copy-markdown"><i class="ph ph-copy"></i> Copy</button>
+                    <button class="btn btn-secondary" data-format="markdown"><i class="ph ph-download-simple"></i> Download</button>
+                </div>
+            </div>
+
+            <div class="export-opt-group">
+                <span class="opt-label">Plain Text</span>
+                <div class="btn-group-row">
+                    <button class="btn btn-secondary" data-format="copy-txt"><i class="ph ph-copy"></i> Copy</button>
+                    <button class="btn btn-secondary" data-format="txt"><i class="ph ph-download-simple"></i> Download</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const { exportToMarkdown, exportToTxt, exportToHtml, exportToImage, copyToClipboardAsMarkdown, copyToClipboardAsText, copyToClipboardAsHtml } = await import('./export.js');
+
+    container.querySelectorAll('button').forEach(btn => {
+        btn.onclick = async () => {
+            const format = btn.dataset.format;
+            document.getElementById('generic-modal').classList.add('hidden');
+
+            if (format === 'markdown') {
+                exportToMarkdown(turnChunks, filename);
+            } else if (format === 'copy-markdown') {
+                copyToClipboardAsMarkdown(turnChunks);
+            } else if (format === 'txt') {
+                exportToTxt(turnChunks, filename);
+            } else if (format === 'copy-txt') {
+                copyToClipboardAsText(turnChunks);
+            } else if (format === 'html' || format === 'copy-html') {
+                const chatStream = document.getElementById('chat-stream');
+                const isCopy = format === 'copy-html';
+                const action = isCopy ? () => copyToClipboardAsHtml(chatStream, `Turn ${index + 1} Export`) : () => exportToHtml(chatStream, `Turn ${index + 1} Export`, filename);
+
+                if (!prefs.isScrollMode && state.focusIndex === index) {
+                    action();
+                } else {
+                    const oldHtml = chatStream.innerHTML;
+                    UI.renderConversation(state.parsedData, index, state.currentPrompts);
+                    action();
+                    chatStream.innerHTML = oldHtml;
+                }
+            } else if (format === 'image') {
+                const chatStream = document.getElementById('chat-stream');
+                if (!prefs.isScrollMode && state.focusIndex === index) {
+                    exportToImage(chatStream, filename);
+                } else {
+                    const oldHtml = chatStream.innerHTML;
+                    UI.renderConversation(state.parsedData, index, state.currentPrompts);
+                    await exportToImage(chatStream, filename);
+                    chatStream.innerHTML = oldHtml;
+                }
+            }
+        };
+    });
+
+    UI.showModal({
+        title: 'Export Turn',
+        message: 'Choose a format to export this turn:',
+        headerColor: 'var(--accent-surface)',
+        iconClass: 'ph ph-download-simple',
+        extraContent: container,
+        dismissBtn: { text: 'Cancel' }
+    });
 }
 
 function performSearch(term) {
@@ -624,6 +730,74 @@ function setupEventListeners() {
     });
 
     document.getElementById('searchPrompts').addEventListener('input', (e) => performSearch(e.target.value));
+
+    // Full Export Logic (Widget)
+    const exportWidgetBtn = document.getElementById('exportWidgetBtn');
+    const exportWidgetPopover = document.getElementById('export-widget-popover');
+
+    if (exportWidgetBtn) {
+        exportWidgetBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            exportWidgetPopover.classList.toggle('hidden');
+        });
+    }
+
+    exportWidgetPopover.querySelectorAll('[data-format]').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const format = item.dataset.format;
+            exportWidgetPopover.classList.add('hidden');
+            handleFullExport(format);
+        });
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!exportWidgetPopover.contains(e.target) && e.target !== exportWidgetBtn) {
+            exportWidgetPopover.classList.add('hidden');
+        }
+    });
+
+    async function handleFullExport(format) {
+        if (!state.parsedData) return;
+        const { exportToMarkdown, exportToTxt, exportToHtml, exportToImage, copyToClipboardAsMarkdown, copyToClipboardAsText, copyToClipboardAsHtml } = await import('./export.js');
+        const filename = state.currentFileName;
+        const allChunks = state.parsedData.chunkedPrompt.chunks;
+
+        if (format === 'markdown') {
+            exportToMarkdown(allChunks, filename);
+        } else if (format === 'copy-markdown') {
+            copyToClipboardAsMarkdown(allChunks);
+        } else if (format === 'txt') {
+            exportToTxt(allChunks, filename);
+        } else if (format === 'copy-txt') {
+            copyToClipboardAsText(allChunks);
+        } else if (format === 'html' || format === 'copy-html') {
+            const chatStream = document.getElementById('chat-stream');
+            const isCopy = format === 'copy-html';
+            const action = isCopy ? () => copyToClipboardAsHtml(chatStream, state.currentFileName) : () => exportToHtml(chatStream, state.currentFileName, filename);
+
+            if (prefs.isScrollMode) {
+                action();
+            } else {
+                 const oldHtml = chatStream.innerHTML;
+                 const oldView = chatStream.getAttribute('data-view');
+                 UI.renderFullConversation(state.parsedData, state.currentPrompts);
+                 action();
+                 if (oldView === 'full') UI.renderFullConversation(state.parsedData, state.currentPrompts);
+                 else UI.renderConversation(state.parsedData, state.focusIndex, state.currentPrompts);
+            }
+        } else if (format === 'image') {
+            const chatStream = document.getElementById('chat-stream');
+            if (prefs.isScrollMode) {
+                showToast("Capturing long conversation as image... this may take a moment.");
+                exportToImage(chatStream, filename);
+            } else {
+                UI.renderFullConversation(state.parsedData, state.currentPrompts);
+                await exportToImage(chatStream, filename);
+                UI.renderConversation(state.parsedData, state.focusIndex, state.currentPrompts);
+            }
+        }
+    }
     
     document.getElementById('clearRecentsBtn').addEventListener('click', () => {
         UI.showModal({
@@ -654,11 +828,30 @@ function setupEventListeners() {
             UI.populateSidebar(state.currentPrompts, {
                 onPromptClick: (index) => handlePromptClick(index),
                 onRenamePrompt: (index, newName) => handlePromptRename(index, newName),
-                onRevertPrompt: (index) => handlePromptRevert(index)
+                onRevertPrompt: (index) => handlePromptRevert(index),
+                onExportTurn: (index) => handleExportTurn(index)
             }, record);
 
-            if (prefs.isScrollMode) renderCompleteDialog();
-            else renderChat(state.focusIndex);
+            if (prefs.isScrollMode) {
+                const targetIdx = state.focusIndex;
+                renderCompleteDialog();
+                updateUrl(state.currentFileId, state.currentFileRecordId, null, targetIdx);
+
+                // Use multiple attempts to ensure scroll happens after layout
+                const performScroll = () => {
+                    const target = document.getElementById(`msg-user-${targetIdx}`);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'auto', block: 'start' });
+                        // Re-confirm URL hasn't been reset by observer
+                        updateUrl(state.currentFileId, state.currentFileRecordId, null, targetIdx, true);
+                    }
+                };
+
+                setTimeout(performScroll, 50);
+                setTimeout(performScroll, 200);
+            } else {
+                renderChat(state.focusIndex);
+            }
             UI.hideLoading();
         }, 50);
     });

@@ -25,9 +25,10 @@
 
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
 
     <link id="highlight-stylesheet" rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/androidstudio.min.css">
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/androidstudio.min.css">
 
     <link rel="stylesheet" href="./src/css/styles.css">
 
@@ -39,6 +40,7 @@
 </head>
 
 <body>
+
 
     <div id="sidebar-overlay"></div>
 
@@ -355,6 +357,7 @@
             </div>
 
             <div class="toolbar-actions">
+
                 <div class="btn-group hidden" id="exportGroup">
                     <button id="exportBtn" class="btn btn-secondary btn-left" title="Download Clean JSON">
                         <i class="ph ph-export"></i>
@@ -444,8 +447,35 @@
             <button id="scroll-bottom" title="Bottom of View"><i class="ph ph-arrow-line-down"></i></button>
         </div>
 
-        <div id="media-widget" class="hidden">
-            <button id="mediaGalleryBtn" title="Media Gallery"><i class="ph ph-images"></i></button>
+        <div class="floating-widgets-group">
+            <div id="export-widget" class="hidden">
+                <div id="export-widget-popover" class="sideways-popover hidden">
+                    <div class="popover-arrow sideways"></div>
+                    <div class="popover-content">
+                        <div class="popover-section-title">Export Full History</div>
+                        <div class="popover-item-group">
+                            <button class="popover-item" data-format="html"><i class="ph ph-code"></i> HTML</button>
+                            <button class="popover-copy-btn" data-format="copy-html" title="Copy HTML"><i class="ph ph-copy"></i></button>
+                        </div>
+                        <div class="popover-item-group">
+                            <button class="popover-item" data-format="markdown"><i class="ph ph-markdown-logo"></i> Markdown</button>
+                            <button class="popover-copy-btn" data-format="copy-markdown" title="Copy Markdown"><i class="ph ph-copy"></i></button>
+                        </div>
+                        <div class="popover-item-group">
+                            <button class="popover-item" data-format="txt"><i class="ph ph-file-txt"></i> Plain Text</button>
+                            <button class="popover-copy-btn" data-format="copy-txt" title="Copy Text"><i class="ph ph-copy"></i></button>
+                        </div>
+                        <div class="popover-item-group">
+                            <button class="popover-item" data-format="image"><i class="ph ph-image"></i> Image (PNG)</button>
+                        </div>
+                    </div>
+                </div>
+                <button id="exportWidgetBtn" title="Export Conversation"><i class="ph ph-download-simple"></i></button>
+            </div>
+
+            <div id="media-widget" class="hidden">
+                <button id="mediaGalleryBtn" title="Media Gallery"><i class="ph ph-images"></i></button>
+            </div>
         </div>
 
     </main>
@@ -457,10 +487,18 @@
 
     <template id="message-tooltip-template">
         <div class="message-tooltip">
-            <button class="tooltip-btn" data-action="copy-md" title="Copy as Markdown"><i
-                    class="ph ph-markdown-logo"></i></button>
-            <button class="tooltip-btn" data-action="copy-text" title="Copy as Plain Text"><i
-                    class="ph ph-text-t"></i></button>
+            <div class="tooltip-section">
+                <button class="tooltip-btn" data-action="copy-md" title="Copy Markdown"><i class="ph ph-copy"></i><span>MD</span></button>
+                <button class="tooltip-btn" data-action="export-md" title="Download Markdown"><i class="ph ph-markdown-logo"></i><span>MD</span></button>
+            </div>
+            <div class="tooltip-section">
+                <button class="tooltip-btn" data-action="copy-text" title="Copy Text"><i class="ph ph-copy"></i><span>TXT</span></button>
+                <button class="tooltip-btn" data-action="export-txt" title="Download Text"><i class="ph ph-file-txt"></i><span>TXT</span></button>
+            </div>
+            <div class="tooltip-section">
+                <button class="tooltip-btn" data-action="export-html" title="Export HTML"><i class="ph ph-code"></i></button>
+                <button class="tooltip-btn" data-action="export-image" title="Export Image"><i class="ph ph-image"></i></button>
+            </div>
             <button class="tooltip-btn hidden" data-action="download-media" title="Download Media (.zip)"><i
                     class="ph ph-download-simple"></i></button>
         </div>
@@ -561,15 +599,15 @@
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/markdown.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/csharp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/markdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/xml.min.js"></script>
     <script type="module" src="./src/js/app.js"></script>
 </body>
 

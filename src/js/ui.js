@@ -1,6 +1,6 @@
 /* global marked, DOMPurify, hljs */
 import { prefs, CODE_THEMES } from './settings.js';
-import { truncate, showToast } from './utils.js';
+import { truncate, showToast, updateUrl } from './utils.js';
 import { fetchProxyContent, fetchProxyBlob } from './drive.js';
 
 const driveAccessRegistry = JSON.parse(localStorage.getItem('driveAccessRegistry') || '{}');
@@ -343,7 +343,7 @@ function initCodeThemeUI() {
         const themeObj = CODE_THEMES.find(t => t.value === themeValue);
         if (themeObj) currentNameEl.textContent = themeObj.name;
 
-        mainStylesheet.href = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/${themeValue}.min.css`;
+        mainStylesheet.href = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/${themeValue}.min.css`;
         localStorage.setItem('codeTheme', themeValue);
 
         Array.from(options.children).forEach(child => {
@@ -371,7 +371,7 @@ function initCodeThemeUI() {
         previewContainer.style.top = `${rect.top}px`;
         previewContainer.style.left = `${rect.right + 12}px`;
 
-        const styleUrl = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/${themeValue}.min.css`;
+        const styleUrl = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/${themeValue}.min.css`;
 
         const dropdownCss = `
             .lang-select-wrapper { position: relative; margin-top: 8px; user-select: none; }
@@ -641,7 +641,7 @@ export function showModal(config) {
 
     // Set Header
     title.textContent = config.title || 'Notification';
-    header.style.backgroundColor = config.headerColor || '#ef4444';
+    header.style.backgroundColor = config.headerColor || 'var(--accent-surface)';
     if (config.iconClass) icon.className = config.iconClass;
     else icon.className = 'ph-fill ph-warning-circle';
 
@@ -929,7 +929,7 @@ export function populateSidebar(prompts, handlers, activeRecord = null) {
         return;
     }
 
-    const { onPromptClick, onRenamePrompt, onRevertPrompt } = handlers;
+    const { onPromptClick, onRenamePrompt, onRevertPrompt, onExportTurn } = handlers;
     const customNames = (activeRecord && activeRecord.customPromptNames) ? activeRecord.customPromptNames : {};
 
     prompts.forEach((p, index) => {
@@ -1019,6 +1019,18 @@ export function populateSidebar(prompts, handlers, activeRecord = null) {
         };
 
         actionsGroup.appendChild(renameBtn);
+
+        const exportBtn = document.createElement('button');
+        exportBtn.className = 'history-action-btn';
+        exportBtn.title = 'Export Turn';
+        exportBtn.innerHTML = '<i class="ph ph-download-simple"></i>';
+        exportBtn.onclick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (onExportTurn) onExportTurn(index, e);
+        };
+
+        actionsGroup.appendChild(exportBtn);
 
         if (isEdited) {
             const revertBtn = document.createElement('button');
@@ -1436,17 +1448,23 @@ export function renderFullConversation(parsedData, promptsList) {
 
     postProcessCodeBlocks();
     
+    let observerIgnore = true;
+    setTimeout(() => { observerIgnore = false; }, 500);
+
     const observer = new IntersectionObserver((entries) => {
+        if (observerIgnore) return;
         let visible = entries.filter(e => e.isIntersecting);
         if(visible.length > 0) {
             visible.sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
             const id = visible[0].target.id;
-            const idx = id.split('-').pop();
+            const idx = parseInt(id.split('-').pop());
             setActiveSidebarItem(idx);
+
+            if (_appState) _appState.focusIndex = idx;
 
             // Update URL with scrollTo if in scroll mode
             if (prefs.isScrollMode && _appState) {
-                updateUrl(_appState.currentFileId, _appState.currentFileRecordId, null, idx);
+                updateUrl(_appState.currentFileId, _appState.currentFileRecordId, null, idx, true);
             }
         }
     }, { root: els.scrollContainer, threshold: 0.1 });
@@ -1492,7 +1510,11 @@ function createMessageElement(chunks, role, id = null) {
     if(tooltipTemplate) {
         const tooltip = tooltipTemplate.content.cloneNode(true);
         const copyMd = tooltip.querySelector('[data-action="copy-md"]');
+        const exportMd = tooltip.querySelector('[data-action="export-md"]');
         const copyText = tooltip.querySelector('[data-action="copy-text"]');
+        const expHtml = tooltip.querySelector('[data-action="export-html"]');
+        const expTxt = tooltip.querySelector('[data-action="export-txt"]');
+        const expImg = tooltip.querySelector('[data-action="export-image"]');
         const dlMedia = tooltip.querySelector('[data-action="download-media"]');
         
         // Find the main text content for copying. Use the first chunk's text if available.
@@ -1500,19 +1522,40 @@ function createMessageElement(chunks, role, id = null) {
         const mainTextContent = chunks.map(c => c.text).filter(Boolean).join('\n\n');
 
         if (mainTextContent) {
-            copyMd.onclick = () => {
-                navigator.clipboard.writeText(mainTextContent).then(() => showToast("Copied Markdown"));
+            copyMd.onclick = async () => {
+                const { copyToClipboardAsMarkdown } = await import('./export.js');
+                copyToClipboardAsMarkdown(chunks);
             };
-            copyText.onclick = () => {
-                // Remove Markdown formatting for plain text copy
-                const strippedText = mainTextContent.replace(/([_*~`])/g, '');
-                navigator.clipboard.writeText(strippedText).then(() => showToast("Copied Plain Text"));
+            exportMd.onclick = async () => {
+                const { exportToMarkdown } = await import('./export.js');
+                exportToMarkdown(chunks, `Message_${filename}`);
+            };
+            copyText.onclick = async () => {
+                const { copyToClipboardAsText } = await import('./export.js');
+                copyToClipboardAsText(chunks);
             };
         } else {
             // Hide text buttons if no text
-            copyMd.classList.add('hidden');
-            copyText.classList.add('hidden');
+            copyMd.parentElement.classList.add('hidden');
+            copyText.parentElement.classList.add('hidden');
         }
+
+        const filename = els.filenameDisplay.title || "export";
+
+        expHtml.onclick = async () => {
+            const { exportToHtml } = await import('./export.js');
+            exportToHtml(wrapper, "Message Export", `Message_${filename}`);
+        };
+
+        expTxt.onclick = async () => {
+            const { exportToTxt } = await import('./export.js');
+            exportToTxt(chunks, `Message_${filename}`);
+        };
+
+        expImg.onclick = async () => {
+            const { exportToImage } = await import('./export.js');
+            exportToImage(wrapper, `Message_${filename}`);
+        };
 
         if (hasMedia && dlMedia) {
             dlMedia.classList.remove('hidden');
