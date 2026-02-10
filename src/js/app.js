@@ -614,14 +614,63 @@ function setupEventListeners() {
     });
 
     // Drag & Drop
-    window.addEventListener('dragover', (e) => { e.preventDefault(); document.body.style.opacity = '0.5'; });
-    window.addEventListener('dragleave', () => document.body.style.opacity = '1');
+    const isDropInLoadArea = (e) => {
+        const loadGroup = document.getElementById('loadGroup');
+        const linkPopover = document.getElementById('link-popover');
+        return (loadGroup && loadGroup.contains(e.target)) || (linkPopover && linkPopover.contains(e.target));
+    };
+
+    window.addEventListener('dragover', (e) => {
+        const isFileLoaded = !!state.parsedData;
+        const inLoadArea = isDropInLoadArea(e);
+        const loadGroup = document.getElementById('loadGroup');
+
+        if (!isFileLoaded || inLoadArea) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            document.body.style.opacity = '0.5';
+            if (inLoadArea && loadGroup) loadGroup.classList.add('drag-active');
+            else if (loadGroup) loadGroup.classList.remove('drag-active');
+        } else {
+            document.body.style.opacity = '1';
+            if (loadGroup) loadGroup.classList.remove('drag-active');
+        }
+    });
+
+    window.addEventListener('dragleave', (e) => {
+        if (e.relatedTarget === null || e.relatedTarget === document.documentElement) {
+            document.body.style.opacity = '1';
+            const loadGroup = document.getElementById('loadGroup');
+            if (loadGroup) loadGroup.classList.remove('drag-active');
+        }
+    });
+
     window.addEventListener('drop', (e) => {
+        const isFileLoaded = !!state.parsedData;
+        const inLoadArea = isDropInLoadArea(e);
+        const loadGroup = document.getElementById('loadGroup');
+        if (loadGroup) loadGroup.classList.remove('drag-active');
+
+        if (isFileLoaded && !inLoadArea) {
+            document.body.style.opacity = '1';
+            return;
+        }
+
         e.preventDefault();
         document.body.style.opacity = '1';
+
         if (e.dataTransfer.files.length > 0) {
             updateUrl(null);
             handleFile(e.dataTransfer.files[0]);
+        } else {
+            const text = e.dataTransfer.getData('text');
+            if (text) {
+                const trimmed = text.trim();
+                if (trimmed.includes('aistudio.google.com') || trimmed.includes('/prompts/') || trimmed.includes('/app/prompts/') || trimmed.includes('/file/d/')) {
+                    const id = parseDriveLink(trimmed);
+                    if (id) loadFromDrive(id);
+                }
+            }
         }
     });
 
@@ -645,7 +694,7 @@ function setupEventListeners() {
 
     function handlePaste(text) {
         const trimmed = text.trim();
-        if (trimmed.includes('aistudio.google.com') || trimmed.includes('/prompts/') || trimmed.includes('/file/d/')) {
+        if (trimmed.includes('aistudio.google.com') || trimmed.includes('/prompts/') || trimmed.includes('/app/prompts/') || trimmed.includes('/file/d/')) {
             const id = parseDriveLink(trimmed);
             if(id) loadFromDrive(id);
             else UI.showError("Link Error", "Could not parse ID from link.");
