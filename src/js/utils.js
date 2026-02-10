@@ -30,7 +30,7 @@ export function updateUrl(id, localId = null, turn = null, scrollTo = null, repl
     try {
         const newUrl = new URL(window.location);
         // Clear all possible ID and positioning params to start fresh
-        const paramsToRemove = ['id', 'chat', 'view', 'h', 'localId', 'local', 'remoteId', 'turn', 'scrollTo'];
+        const paramsToRemove = ['id', 'chat', 'view', 'remote', 'localId', 'local', 'remoteId', 'turn', 'scrollTo'];
         paramsToRemove.forEach(p => newUrl.searchParams.delete(p));
 
         if (localId) {

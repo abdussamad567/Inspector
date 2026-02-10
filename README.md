@@ -64,9 +64,15 @@ Not enough reason? To find an exhaustive list of benefits that you get from usin
 Inspector supports a flexible routing system. You can share deep links to specific logs (provided the Google Drive file permissions are set to "Anyone with the link"). The app will automatically parse the ID from almost any reasonable URL structure.
 
 **Query Parameters (Universal Support):**
-*   `?view=FILE_ID` (Recommended)
+*   `?view=FILE_ID` (For Google Drive conversations)
 *   `?id=FILE_ID`
 *   `?chat=FILE_ID`
+*   `?remote=FILE_ID`
+*   `?remoteId=FILE_ID`
+*   `?local=RECORD_ID` (For IndexedDB stored records)
+*   `?localId=RECORD_ID`
+*   `?turn=INDEX` (Deep link to specific prompt turn)
+*   `?scrollTo=INDEX` (Deep link to scroll position)
 
 **Clean Paths (For SPA Hosts like Vercel/Netlify):**
 *   `/view/FILE_ID`

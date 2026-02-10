@@ -43,8 +43,9 @@ function handleInitialLoad() {
     const urlParams = new URLSearchParams(window.location.search);
 
     // Support all variants including new ones
-    let fileId = urlParams.get('view') || urlParams.get('id') || urlParams.get('chat') || urlParams.get('remoteId');
-    let localId = urlParams.get('local') || urlParams.get('h') || urlParams.get('localId');
+    let fileId = urlParams.get('view') || urlParams.get('id') || urlParams.get('chat');
+    fileId ??= urlParams.get('remote') || urlParams.get('remoteId');
+    let localId = urlParams.get('local') || urlParams.get('localId');
     const turn = urlParams.get('turn');
     const scrollTo = urlParams.get('scrollTo');
 
