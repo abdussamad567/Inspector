@@ -839,7 +839,7 @@ body.wrap-codeblocks #text-viewer-modal pre {
     flex: 1;
 }
 
-.media-checkbox {
+input[type="checkbox"].media-checkbox {
     position: absolute;
     top: 8px;
     right: 8px;
@@ -909,7 +909,7 @@ input[type="checkbox"]:checked::before {
 }
 
 /* Specific adjustment for media gallery checkboxes */
-.media-checkbox {
+input[type="checkbox"].media-checkbox {
     margin: 0 !important;
 }
 
@@ -1172,6 +1172,7 @@ input[type="checkbox"]:checked::before {
     height: 36px;
     background: transparent;
     border: none;
+    border-radius: var(--radius-sm);
     color: var(--text-muted);
     cursor: pointer;
     border-left: 1px solid var(--border-subtle);
