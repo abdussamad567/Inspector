@@ -1,4 +1,4 @@
-_At least one feature request or bug fix will be completed per day.<br>All contributions would be greatly appreciated, whether that's in the form of opening or closing issues. You have my thanks!_
+_All contributions would be greatly appreciated, whether that's in the form of opening or closing issues. You have my thanks!_
 # Inspector - Google AI Studio Viewer
 
 Inspector is a UX-focused, open-source visualization tool designed for developers working with Google AI Studio. It transforms raw, difficult-to-read JSON exports into a clean, readable, and interactive conversation timeline.
