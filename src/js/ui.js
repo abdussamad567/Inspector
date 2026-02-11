@@ -1,6 +1,6 @@
 /* global marked, DOMPurify, hljs */
 import { prefs, CODE_THEMES } from './settings.js';
-import { truncate, showToast, updateUrl } from './utils.js';
+import { truncate, showToast, updateUrl, getUrl } from './utils.js';
 import { fetchProxyContent, fetchProxyBlob } from './drive.js';
 
 const driveAccessRegistry = JSON.parse(localStorage.getItem('driveAccessRegistry') || '{}');
@@ -889,7 +889,7 @@ export function showConflictResolver(targetName, existingFile, currentFileName, 
     };
 
     openConflictingBtn.onclick = () => {
-        window.open(`${window.location.origin}${window.location.pathname}?local=${existingFile.id}`, '_blank');
+        window.open(getUrl(existingFile.driveId, existingFile.id), '_blank');
     };
 
     showModal({
@@ -984,15 +984,9 @@ export function populateSidebar(prompts, handlers, activeRecord = null) {
         item.dataset.index = index;
 
         // URL construction for CTRL+Click
-        const url = new URL(window.location);
-        url.searchParams.delete('turn');
-        url.searchParams.delete('scrollTo');
-        if (prefs.isScrollMode) {
-            url.searchParams.set('scrollTo', index);
-        } else {
-            url.searchParams.set('turn', index);
-        }
-        item.href = url.toString();
+        item.href = prefs.isScrollMode
+            ? getUrl(activeRecord.driveId, activeRecord.id, null, index)
+            : getUrl(activeRecord.driveId, activeRecord.id, index, null);
 
         item.onclick = (e) => {
             if (item.classList.contains('is-editing')) {
