@@ -17,7 +17,7 @@ Google AI Studio is an excellent prototyping environment, but managing long cont
 
 Inspector solves this by parsing that raw JSON locally into a rich, searchable interface.
 
-Not enough reason? To find an exhaustive list of benefits that you get from using Inspector, go to: https://ai.timchinye.com/chat/1gTsxi21uaAEwa95Sl4eQ_B9HajiU3RYd.
+Not enough reason? To find an exhaustive list of benefits that you get from using Inspector, go to: https://ai.timchinye.com/chat/1d0lpBd-c_v7ZqjK1C1zRN4JKNhGW6Qfd.
 
 ### How to view an Google AI Studio raw (JSON) export file using Inspector
 <a href="https://www.youtube.com/watch?v=e4N2fiAC1XU" target="_blank"><img src="./assets/screenshots/how-to-use-thumbnail.png" alt="How to view an Google AI Studio raw (JSON) export file using Inspector" width="576" /></a>
