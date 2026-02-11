@@ -28,32 +28,50 @@ export function showToast(message, iconClass = 'ph-fill ph-check-circle') {
 
 export function updateUrl(id, localId = null, turn = null, scrollTo = null, replace = false) {
     try {
-        const newUrl = new URL(window.location);
-        // Clear all possible ID and positioning params to start fresh
-        const paramsToRemove = ['id', 'chat', 'view', 'remote', 'localId', 'local', 'remoteId', 'turn', 'scrollTo'];
-        paramsToRemove.forEach(p => newUrl.searchParams.delete(p));
+        const url = new URL(window.location);
+        const path = url.pathname;
 
-        if (localId) {
-            newUrl.searchParams.set('local', localId);
-        } else if (id) {
-            // If the ID is purely numeric, it's likely a local IndexedDB ID
-            if (/^\d+$/.test(id)) {
-                newUrl.searchParams.set('local', id);
-            } else {
-                newUrl.searchParams.set('view', id);
+        const idParams = ['remote', 'view', 'id', 'chat', 'remoteId'];
+        const localParams = ['local', 'localId', 'h'];
+        const allIdParams = [...idParams, ...localParams];
+        const posParams = ['turn', 'scrollTo'];
+
+        // Determine existing parameter names to preserve them
+        const existingIdParam = idParams.find(p => url.searchParams.has(p));
+        const existingLocalParam = localParams.find(p => url.searchParams.has(p));
+
+        // DRY: Check if ID is already in path
+        const isIdInPath = (val) => val && path.includes(String(val));
+
+        // Clear all relevant params first to re-apply correctly
+        allIdParams.forEach(p => url.searchParams.delete(p));
+        posParams.forEach(p => url.searchParams.delete(p));
+
+        if (id) {
+            // Priority 1: Remote ID
+            if (!isIdInPath(id)) {
+                const paramName = existingIdParam || 'remote';
+                url.searchParams.set(paramName, id);
+            }
+        } else if (localId) {
+            // Priority 2: Local ID (only if no remote ID)
+            if (!isIdInPath(localId)) {
+                let paramName = existingLocalParam || 'local';
+                if (paramName === 'h') paramName = 'local'; // Kill legacy 'h'
+                url.searchParams.set(paramName, localId);
             }
         }
 
-        if (turn !== null) {
-            newUrl.searchParams.set('turn', turn);
-        } else if (scrollTo !== null) {
-            newUrl.searchParams.set('scrollTo', scrollTo);
-        }
+        // Positioning: Hide if 0
+        const t = parseInt(turn);
+        const s = parseInt(scrollTo);
+        if (!isNaN(t) && t > 0) url.searchParams.set('turn', t);
+        if (!isNaN(s) && s > 0) url.searchParams.set('scrollTo', s);
 
         if (replace) {
-            window.history.replaceState({}, '', newUrl);
+            window.history.replaceState({}, '', url);
         } else {
-            window.history.pushState({}, '', newUrl);
+            window.history.pushState({}, '', url);
         }
     } catch (e) {
         console.error("Failed to update URL", e);

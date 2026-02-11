@@ -889,7 +889,7 @@ export function showConflictResolver(targetName, existingFile, currentFileName, 
     };
 
     openConflictingBtn.onclick = () => {
-        window.open(`${window.location.origin}${window.location.pathname}?h=${existingFile.id}`, '_blank');
+        window.open(`${window.location.origin}${window.location.pathname}?local=${existingFile.id}`, '_blank');
     };
 
     showModal({
